@@ -6,9 +6,11 @@ This is part of TAP training 2025.
 ## 🚀 Tech Stack
 
 - **Frontend**: React, Axios, Tailwind CSS
-- **Backend**: Node.js + Express, Python
+- **Backend**: Java + Springboot
 - **Database**: MySQL
 - **Financial Data**: Yahoo Finance API / Cached Sample API
+- **Charts: Chart.js 
+- **API Docs: Swagger
 
 ## 📦 Features
 
