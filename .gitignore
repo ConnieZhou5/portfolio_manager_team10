@@ -1,0 +1,39 @@
+# === BACKEND (Spring Boot + Maven) ===
+/backend/target/
+*.log
+*.class
+*.jar
+*.war
+
+# Maven Wrapper files
+/backend/.mvn/
+!/backend/mvnw
+!/backend/mvnw.cmd
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+# === FRONTEND ===
+/frontend/node_modules/
+frontend/build/
+frontend/.env.local
+frontend/.DS_Store
+
+# === General OS & Editor ===
+*.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.bak
+*.tmp
+*.orig
+
+# === Environment/Secrets ===
+.env
+.env.*
