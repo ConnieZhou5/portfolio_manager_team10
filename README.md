@@ -9,8 +9,8 @@ This is part of TAP training 2025.
 - **Backend**: Java + Springboot
 - **Database**: MySQL
 - **Financial Data**: Yahoo Finance API / Cached Sample API
-- **Charts: Chart.js 
-- **API Docs: Swagger
+- **Charts**: Chart.js 
+- **API Docs**: Swagger
 
 ## 📦 Features
 
