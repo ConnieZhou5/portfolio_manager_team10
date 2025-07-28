@@ -58,4 +58,25 @@ This is part of TAP training 2025.
     mvn compile exec:java -Dexec.mainClass="com.portfolio.backend.db.CreateDatabase"
     ```
 
+### Backend Setup
+   - To start the Spring Boot backend server:
+   ```bash
+   cd backend
+   mvn spring-boot:run
+   ```
+   Once started, the backend will be accessible at:
+   ```bash
+   http://localhost:8080
+   ```
+
+
+### 🧪 API Testing (with REST Client in VS Code)
+   - We use the REST Client extension in VS Code to test the API using the portfolio-api.http file.
+   - Make sure your Spring Boot app is running on localhost:8080
+   ```
+   Open portfolio-api.http in VS Code
+   Hover over any GET or POST request line
+   Click "Send Request" to execute the call and see the response inline
+   ```
+
 
