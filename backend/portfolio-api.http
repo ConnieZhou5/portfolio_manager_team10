@@ -1,0 +1,85 @@
+### Portfolio API Tests
+### Make sure your Spring Boot app is running on localhost:8080
+
+### 1. GET all portfolio items
+GET http://localhost:8080/api/portfolio
+
+###
+
+### 2. POST new portfolio item (AAPL)
+POST http://localhost:8080/api/portfolio
+Content-Type: application/json
+
+{
+  "ticker": "AAPL",
+  "quantity": 100,
+  "buyPrice": 150.50,
+  "buyDate": "2025-07-28"
+}
+
+###
+
+### 3. POST another item (GOOGL)
+POST http://localhost:8080/api/portfolio
+Content-Type: application/json
+
+{
+  "ticker": "GOOGL",
+  "quantity": 50,
+  "buyPrice": 2800.00,
+  "buyDate": "2025-07-28"
+}
+
+###
+
+### 4. GET all items (should show 2 items)
+GET http://localhost:8080/api/portfolio
+
+###
+
+### 5. GET specific item
+GET http://localhost:8080/api/portfolio/1
+
+###
+
+### 6. PUT (update) item
+PUT http://localhost:8080/api/portfolio/1
+Content-Type: application/json
+
+{
+  "quantity": 150,
+  "buyPrice": 155.75,
+  "buyDate": "2025-07-25"
+}
+
+###
+
+### 7. GET all items again (should show updated item)
+GET http://localhost:8080/api/portfolio
+
+###
+
+### 8. DELETE item
+DELETE http://localhost:8080/api/portfolio/1
+
+###
+
+### 9. GET all items (should show 1 item remaining)
+GET http://localhost:8080/api/portfolio
+
+###
+
+### 10. Test error case - POST with invalid data
+POST http://localhost:8080/api/portfolio
+Content-Type: application/json
+
+{
+  "ticker": "",
+  "quantity": -5,
+  "buyPrice": -10.00
+}
+
+###
+
+### 11. Test error case - GET non-existent item
+GET http://localhost:8080/api/portfolio/999 
