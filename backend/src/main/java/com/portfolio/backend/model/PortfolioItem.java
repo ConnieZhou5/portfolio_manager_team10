@@ -97,6 +97,7 @@ public class PortfolioItem {
                 ", quantity=" + quantity +
                 ", buyPrice=" + buyPrice +
                 ", buyDate=" + buyDate +
+                ", totalValue=" + getTotalValue() +
                 '}';
     }
 }
