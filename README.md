@@ -70,6 +70,19 @@ This is part of TAP training 2025.
    http://localhost:8080
    ```
 
+### Frontend Setup
+   - Run the following from inside the `frontend/` folder:
+   ```bash
+   cd frontend
+   npm install
+   npm start
+   ```
+   Once started, the app will open at:
+   ```bash
+   http://localhost:3000
+   ```
+
+<br><br>
 
 ### 🧪 API Testing (with REST Client in VS Code)
    - We use the REST Client extension in VS Code to test the API using the portfolio-api.http file.
