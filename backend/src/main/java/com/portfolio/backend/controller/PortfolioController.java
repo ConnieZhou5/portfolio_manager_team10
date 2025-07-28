@@ -44,11 +44,6 @@ public class PortfolioController {
     @PostMapping
     public ResponseEntity<PortfolioItem> addPortfolioItem(@RequestBody PortfolioItem portfolioItem) {
         try {
-            // Set creation timestamp if not already set
-            if (portfolioItem.getCreatedAt() == null) {
-                portfolioItem.setCreatedAt(LocalDateTime.now());
-            }
-            
             // Validate required fields
             if (portfolioItem.getTicker() == null || portfolioItem.getTicker().trim().isEmpty()) {
                 return ResponseEntity.badRequest().build();
