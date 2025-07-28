@@ -62,6 +62,7 @@ This is part of TAP training 2025.
    - To start the Spring Boot backend server:
    ```bash
    cd backend
+   mvn clean install
    mvn spring-boot:run
    ```
    Once started, the backend will be accessible at:
@@ -79,4 +80,13 @@ This is part of TAP training 2025.
    Click "Send Request" to execute the call and see the response inline
    ```
 
+### 📘 API Documentation (Swagger UI that help view all API endpoints)
+   - We use **Swagger/OpenAPI** to automatically generate interactive API documentation.
+   - Start the backend:
+   ```bash
+   cd backend
+   mvn spring-boot:run
+   ```
+   - Open browser and go to:
+   http://localhost:8080/swagger-ui/index.html
 
