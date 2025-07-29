@@ -1,14 +1,16 @@
 package com.portfolio.backend.service;
 
+import com.portfolio.backend.dto.PortfolioItemRequest;
+import com.portfolio.backend.dto.PortfolioItemResponse;
 import com.portfolio.backend.model.PortfolioItem;
 import com.portfolio.backend.repository.PortfolioItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class PortfolioService {
@@ -19,32 +21,38 @@ public class PortfolioService {
     /**
      * Get all portfolio items
      * 
-     * @return List of all portfolio items
+     * @return List of all portfolio item responses
      */
-    public List<PortfolioItem> getAllPortfolioItems() {
-        return portfolioItemRepository.findAll();
+    public List<PortfolioItemResponse> getAllPortfolioItems() {
+        return portfolioItemRepository.findAll()
+                .stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
     }
 
     /**
      * Get a portfolio item by ID
      * 
      * @param id The ID of the portfolio item
-     * @return Optional containing the portfolio item if found
+     * @return Optional containing the portfolio item response if found
      */
-    public Optional<PortfolioItem> getPortfolioItemById(Long id) {
-        return portfolioItemRepository.findById(id);
+    public Optional<PortfolioItemResponse> getPortfolioItemById(Long id) {
+        return portfolioItemRepository.findById(id)
+                .map(this::convertToResponse);
     }
 
     /**
      * Add a new portfolio item with validation
      * 
-     * @param portfolioItem The portfolio item to add
-     * @return The saved portfolio item
+     * @param request The portfolio item request
+     * @return The saved portfolio item response
      * @throws IllegalArgumentException if validation fails
      */
-    public PortfolioItem addPortfolioItem(PortfolioItem portfolioItem) {
-        validatePortfolioItem(portfolioItem);
-        return portfolioItemRepository.save(portfolioItem);
+    public PortfolioItemResponse addPortfolioItem(PortfolioItemRequest request) {
+        validatePortfolioItemRequest(request);
+        PortfolioItem portfolioItem = convertToEntity(request);
+        PortfolioItem savedItem = portfolioItemRepository.save(portfolioItem);
+        return convertToResponse(savedItem);
     }
 
     /**
@@ -55,24 +63,26 @@ public class PortfolioService {
      * @return The updated portfolio item
      * @throws IllegalArgumentException if item not found
      */
-    public PortfolioItem updatePortfolioItem(Long id, PortfolioItem portfolioItem) {
+    public PortfolioItemResponse updatePortfolioItem(Long id, PortfolioItemRequest request) {
         PortfolioItem existingItem = portfolioItemRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Portfolio item not found with id: " + id));
 
-        if (portfolioItem.getTicker() != null) {
-            existingItem.setTicker(portfolioItem.getTicker());
+        // Update fields if provided
+        if (request.getTicker() != null) {
+            existingItem.setTicker(request.getTicker());
         }
-        if (portfolioItem.getQuantity() != null) {
-            existingItem.setQuantity(portfolioItem.getQuantity());
+        if (request.getQuantity() != null) {
+            existingItem.setQuantity(request.getQuantity());
         }
-        if (portfolioItem.getBuyPrice() != null) {
-            existingItem.setBuyPrice(portfolioItem.getBuyPrice());
+        if (request.getBuyPrice() != null) {
+            existingItem.setBuyPrice(request.getBuyPrice());
         }
-        if (portfolioItem.getBuyDate() != null) {
-            existingItem.setBuyDate(portfolioItem.getBuyDate());
+        if (request.getBuyDate() != null) {
+            existingItem.setBuyDate(request.getBuyDate());
         }
 
-        return portfolioItemRepository.save(existingItem);
+        PortfolioItem updatedItem = portfolioItemRepository.save(existingItem);
+        return convertToResponse(updatedItem);
     }
 
     /**
@@ -90,21 +100,21 @@ public class PortfolioService {
     }
 
     /**
-     * Validate portfolio item data
+     * Validate portfolio item request data
      * 
-     * @param portfolioItem The portfolio item to validate
+     * @param request The portfolio item request to validate
      * @throws IllegalArgumentException if validation fails
      */
-    private void validatePortfolioItem(PortfolioItem portfolioItem) {
-        if (portfolioItem.getTicker() == null || portfolioItem.getTicker().trim().isEmpty()) {
+    private void validatePortfolioItemRequest(PortfolioItemRequest request) {
+        if (request.getTicker() == null || request.getTicker().trim().isEmpty()) {
             throw new IllegalArgumentException("Ticker is required and cannot be empty");
         }
         
-        if (portfolioItem.getQuantity() == null || portfolioItem.getQuantity() <= 0) {
+        if (request.getQuantity() == null || request.getQuantity() <= 0) {
             throw new IllegalArgumentException("Quantity must be greater than 0");
         }
         
-        if (portfolioItem.getBuyPrice() == null || portfolioItem.getBuyPrice().compareTo(BigDecimal.ZERO) <= 0) {
+        if (request.getBuyPrice() == null || request.getBuyPrice().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Buy price must be greater than 0");
         }
     }
@@ -113,10 +123,13 @@ public class PortfolioService {
      * Get portfolio items by ticker
      * 
      * @param ticker The ticker symbol
-     * @return List of portfolio items with the given ticker
+     * @return List of portfolio item responses with the given ticker
      */
-    public List<PortfolioItem> getPortfolioItemsByTicker(String ticker) {
-        return portfolioItemRepository.findByTicker(ticker);
+    public List<PortfolioItemResponse> getPortfolioItemsByTicker(String ticker) {
+        return portfolioItemRepository.findByTicker(ticker)
+                .stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -138,5 +151,37 @@ public class PortfolioService {
     public BigDecimal getTotalValueByTicker(String ticker) {
         return portfolioItemRepository.getTotalValueByTicker(ticker)
                 .orElse(BigDecimal.ZERO);
+    }
+    
+    /**
+     * Convert PortfolioItem entity to PortfolioItemResponse DTO
+     * 
+     * @param portfolioItem The entity to convert
+     * @return The response DTO
+     */
+    private PortfolioItemResponse convertToResponse(PortfolioItem portfolioItem) {
+        return new PortfolioItemResponse(
+                portfolioItem.getId(),
+                portfolioItem.getTicker(),
+                portfolioItem.getQuantity(),
+                portfolioItem.getBuyPrice(),
+                portfolioItem.getBuyDate(),
+                portfolioItem.getTotalValue()
+        );
+    }
+    
+    /**
+     * Convert PortfolioItemRequest DTO to PortfolioItem entity
+     * 
+     * @param request The request DTO to convert
+     * @return The entity
+     */
+    private PortfolioItem convertToEntity(PortfolioItemRequest request) {
+        PortfolioItem portfolioItem = new PortfolioItem();
+        portfolioItem.setTicker(request.getTicker());
+        portfolioItem.setQuantity(request.getQuantity());
+        portfolioItem.setBuyPrice(request.getBuyPrice());
+        portfolioItem.setBuyDate(request.getBuyDate());
+        return portfolioItem;
     }
 } 

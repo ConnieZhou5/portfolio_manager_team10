@@ -1,6 +1,7 @@
 package com.portfolio.backend.controller;
 
-import com.portfolio.backend.model.PortfolioItem;
+import com.portfolio.backend.dto.PortfolioItemRequest;
+import com.portfolio.backend.dto.PortfolioItemResponse;
 import com.portfolio.backend.service.PortfolioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,12 +22,12 @@ public class PortfolioController {
      * GET /api/portfolio
      * Retrieves all portfolio holdings
      * 
-     * @return List of all portfolio items
+     * @return List of all portfolio item responses
      */
     @GetMapping
-    public ResponseEntity<List<PortfolioItem>> getAllPortfolioItems() {
+    public ResponseEntity<List<PortfolioItemResponse>> getAllPortfolioItems() {
         try {
-            List<PortfolioItem> items = portfolioService.getAllPortfolioItems();
+            List<PortfolioItemResponse> items = portfolioService.getAllPortfolioItems();
             return ResponseEntity.ok(items);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -37,13 +38,13 @@ public class PortfolioController {
      * POST /api/portfolio
      * Adds a new portfolio holding
      * 
-     * @param portfolioItem The portfolio item to add
-     * @return The saved portfolio item with generated ID
+     * @param request The portfolio item request
+     * @return The saved portfolio item response with generated ID
      */
     @PostMapping
-    public ResponseEntity<PortfolioItem> addPortfolioItem(@RequestBody PortfolioItem portfolioItem) {
+    public ResponseEntity<PortfolioItemResponse> addPortfolioItem(@RequestBody PortfolioItemRequest request) {
         try {
-            PortfolioItem savedItem = portfolioService.addPortfolioItem(portfolioItem);
+            PortfolioItemResponse savedItem = portfolioService.addPortfolioItem(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(savedItem);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
@@ -80,12 +81,12 @@ public class PortfolioController {
      * Retrieves a specific portfolio holding by ID
      * 
      * @param id The ID of the portfolio item to retrieve
-     * @return The portfolio item or 404 if not found
+     * @return The portfolio item response or 404 if not found
      */
     @GetMapping("/{id}")
-    public ResponseEntity<PortfolioItem> getPortfolioItemById(@PathVariable Long id) {
+    public ResponseEntity<PortfolioItemResponse> getPortfolioItemById(@PathVariable Long id) {
         try {
-            Optional<PortfolioItem> item = portfolioService.getPortfolioItemById(id);
+            Optional<PortfolioItemResponse> item = portfolioService.getPortfolioItemById(id);
             
             if (item.isPresent()) {
                 return ResponseEntity.ok(item.get());
@@ -103,13 +104,13 @@ public class PortfolioController {
      * Updates an existing portfolio holding
      * 
      * @param id The ID of the portfolio item to update
-     * @param portfolioItem The updated portfolio item data
-     * @return The updated portfolio item or 404 if not found
+     * @param request The updated portfolio item request
+     * @return The updated portfolio item response or 404 if not found
      */
     @PutMapping("/{id}")
-    public ResponseEntity<PortfolioItem> updatePortfolioItem(@PathVariable Long id, @RequestBody PortfolioItem portfolioItem) {
+    public ResponseEntity<PortfolioItemResponse> updatePortfolioItem(@PathVariable Long id, @RequestBody PortfolioItemRequest request) {
         try {
-            PortfolioItem updatedItem = portfolioService.updatePortfolioItem(id, portfolioItem);
+            PortfolioItemResponse updatedItem = portfolioService.updatePortfolioItem(id, request);
             return ResponseEntity.ok(updatedItem);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
