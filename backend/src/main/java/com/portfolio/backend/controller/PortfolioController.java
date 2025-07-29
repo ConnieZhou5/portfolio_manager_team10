@@ -1,13 +1,12 @@
 package com.portfolio.backend.controller;
 
 import com.portfolio.backend.model.PortfolioItem;
-import com.portfolio.backend.repository.PortfolioItemRepository;
+import com.portfolio.backend.service.PortfolioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,7 +15,7 @@ import java.util.Optional;
 public class PortfolioController {
 
     @Autowired
-    private PortfolioItemRepository portfolioItemRepository;
+    private PortfolioService portfolioService;
 
     /**
      * GET /api/portfolio
@@ -27,7 +26,7 @@ public class PortfolioController {
     @GetMapping
     public ResponseEntity<List<PortfolioItem>> getAllPortfolioItems() {
         try {
-            List<PortfolioItem> items = portfolioItemRepository.findAll();
+            List<PortfolioItem> items = portfolioService.getAllPortfolioItems();
             return ResponseEntity.ok(items);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -44,22 +43,10 @@ public class PortfolioController {
     @PostMapping
     public ResponseEntity<PortfolioItem> addPortfolioItem(@RequestBody PortfolioItem portfolioItem) {
         try {
-            // Validate required fields
-            if (portfolioItem.getTicker() == null || portfolioItem.getTicker().trim().isEmpty()) {
-                return ResponseEntity.badRequest().build();
-            }
-            
-            if (portfolioItem.getQuantity() == null || portfolioItem.getQuantity() <= 0) {
-                return ResponseEntity.badRequest().build();
-            }
-            
-            if (portfolioItem.getBuyPrice() == null || portfolioItem.getBuyPrice().compareTo(java.math.BigDecimal.ZERO) <= 0) {
-                return ResponseEntity.badRequest().build();
-            }
-            
-            PortfolioItem savedItem = portfolioItemRepository.save(portfolioItem);
+            PortfolioItem savedItem = portfolioService.addPortfolioItem(portfolioItem);
             return ResponseEntity.status(HttpStatus.CREATED).body(savedItem);
-            
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
@@ -75,10 +62,9 @@ public class PortfolioController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePortfolioItem(@PathVariable Long id) {
         try {
-            Optional<PortfolioItem> existingItem = portfolioItemRepository.findById(id);
+            boolean deleted = portfolioService.deletePortfolioItem(id);
             
-            if (existingItem.isPresent()) {
-                portfolioItemRepository.deleteById(id);
+            if (deleted) {
                 return ResponseEntity.noContent().build(); // 204 No Content
             } else {
                 return ResponseEntity.notFound().build(); // 404 Not Found
@@ -99,7 +85,7 @@ public class PortfolioController {
     @GetMapping("/{id}")
     public ResponseEntity<PortfolioItem> getPortfolioItemById(@PathVariable Long id) {
         try {
-            Optional<PortfolioItem> item = portfolioItemRepository.findById(id);
+            Optional<PortfolioItem> item = portfolioService.getPortfolioItemById(id);
             
             if (item.isPresent()) {
                 return ResponseEntity.ok(item.get());
@@ -123,31 +109,10 @@ public class PortfolioController {
     @PutMapping("/{id}")
     public ResponseEntity<PortfolioItem> updatePortfolioItem(@PathVariable Long id, @RequestBody PortfolioItem portfolioItem) {
         try {
-            Optional<PortfolioItem> existingItem = portfolioItemRepository.findById(id);
-            
-            if (existingItem.isPresent()) {
-                PortfolioItem itemToUpdate = existingItem.get();
-                
-                // Update fields if provided
-                if (portfolioItem.getTicker() != null) {
-                    itemToUpdate.setTicker(portfolioItem.getTicker());
-                }
-                if (portfolioItem.getQuantity() != null) {
-                    itemToUpdate.setQuantity(portfolioItem.getQuantity());
-                }
-                if (portfolioItem.getBuyPrice() != null) {
-                    itemToUpdate.setBuyPrice(portfolioItem.getBuyPrice());
-                }
-                if (portfolioItem.getBuyDate() != null) {
-                    itemToUpdate.setBuyDate(portfolioItem.getBuyDate());
-                }
-                
-                PortfolioItem updatedItem = portfolioItemRepository.save(itemToUpdate);
-                return ResponseEntity.ok(updatedItem);
-            } else {
-                return ResponseEntity.notFound().build();
-            }
-            
+            PortfolioItem updatedItem = portfolioService.updatePortfolioItem(id, portfolioItem);
+            return ResponseEntity.ok(updatedItem);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
