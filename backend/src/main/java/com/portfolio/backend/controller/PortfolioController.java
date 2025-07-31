@@ -14,6 +14,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/portfolio")
+@CrossOrigin(origins = "*")
 public class PortfolioController {
 
     @Autowired
@@ -121,19 +122,16 @@ public class PortfolioController {
     }
 
     /**
-     * POST /api/portfolio/stock-data
-     * Fetches real-time stock data for given symbols
+     * GET /api/portfolio/stats
+     * Retrieves portfolio statistics including total assets, investments, day's gain, and cash
      * 
-     * @param request Map containing list of symbols
-     * @return List of stock data maps
+     * @return Map containing portfolio statistics
      */
-    @PostMapping("/stock-data")
-    public ResponseEntity<List<Map<String, Object>>> getStockData(@RequestBody Map<String, Object> request) {
+    @GetMapping("/stats")
+    public ResponseEntity<Map<String, Object>> getPortfolioStats() {
         try {
-            @SuppressWarnings("unchecked")
-            List<String> symbols = (List<String>) request.get("symbols");
-            List<Map<String, Object>> stockData = portfolioService.getStockData(symbols);
-            return ResponseEntity.ok(stockData);
+            Map<String, Object> stats = portfolioService.getPortfolioStats();
+            return ResponseEntity.ok(stats);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }

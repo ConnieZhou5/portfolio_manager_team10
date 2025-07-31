@@ -1,17 +1,15 @@
 package com.portfolio.backend.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.portfolio.backend.dto.PortfolioItemRequest;
 import com.portfolio.backend.dto.PortfolioItemResponse;
 import com.portfolio.backend.model.PortfolioItem;
+import com.portfolio.backend.model.PortfolioDailyValue;
 import com.portfolio.backend.repository.PortfolioItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,16 +21,12 @@ public class PortfolioService {
 
     @Autowired
     private PortfolioItemRepository portfolioItemRepository;
-
-    private final WebClient webClient;
-    private final ObjectMapper objectMapper;
-
-    public PortfolioService() {
-        this.webClient = WebClient.builder()
-                .baseUrl("https://query1.finance.yahoo.com")
-                .build();
-        this.objectMapper = new ObjectMapper();
-    }
+    
+    @Autowired
+    private CashService cashService;
+    
+    @Autowired
+    private PortfolioDailyValueService portfolioDailyValueService;
 
     /**
      * Get all portfolio items
@@ -170,113 +164,62 @@ public class PortfolioService {
     }
 
     /**
-     * Fetch stock data for given symbols
+     * Get portfolio statistics including total assets, investments, day's gain, and cash
      * 
-     * @param symbols List of stock symbols
-     * @return List of stock data maps
+     * @return Map containing portfolio statistics
      */
-    public List<Map<String, Object>> getStockData(List<String> symbols) {
-        List<Map<String, Object>> responses = new ArrayList<>();
+    public Map<String, Object> getPortfolioStats() {
+        Map<String, Object> stats = new HashMap<>();
         
-        for (String symbol : symbols) {
-            try {
-                Map<String, Object> stockData = fetchStockData(symbol);
-                responses.add(stockData);
-            } catch (Exception e) {
-                Map<String, Object> errorData = new HashMap<>();
-                errorData.put("symbol", symbol);
-                errorData.put("name", null);
-                errorData.put("price", null);
-                errorData.put("currency", null);
-                errorData.put("marketCap", null);
-                errorData.put("error", "Failed to fetch data: " + e.getMessage());
-                responses.add(errorData);
-            }
-        }
+        BigDecimal cash = cashService.getCashBalance();
+        BigDecimal totalPortfolioValue = getTotalPortfolioValue(); // investments
+        BigDecimal totalAssets = totalPortfolioValue.add(cash);
         
-        return responses;
-    }
-
-    /**
-     * Fetch stock data for a single symbol
-     * 
-     * @param symbol Stock symbol
-     * @return Map containing stock data
-     */
-    private Map<String, Object> fetchStockData(String symbol) {
-        String url = "/v8/finance/chart/" + symbol.toUpperCase() + "?interval=1d&range=1d";
+        // Calculate day's gain
+        LocalDate today = LocalDate.now();
+        BigDecimal daysGain = BigDecimal.ZERO;
+        String daysGainPercentage = "0.00%";
         
-        return webClient.get()
-                .uri(url)
-                .retrieve()
-                .bodyToMono(String.class)
-                .map(this::parseStockData)
-                .onErrorReturn(createErrorResponse(symbol))
-                .block();
-    }
-
-    /**
-     * Parse the JSON response from Yahoo Finance API
-     * 
-     * @param jsonResponse JSON response string
-     * @return Map containing stock data
-     */
-    private Map<String, Object> parseStockData(String jsonResponse) {
+        // Get previous day's portfolio value
         try {
-            JsonNode rootNode = objectMapper.readTree(jsonResponse);
-            JsonNode chartNode = rootNode.get("chart");
+            Optional<PortfolioDailyValue> previousDayValue = portfolioDailyValueService.getMostRecentBeforeDate(today);
             
-            if (chartNode == null) {
-                return createErrorResponse("UNKNOWN");
+            if (previousDayValue.isPresent()) {
+                BigDecimal previousTotalValue = previousDayValue.get().getTotalValue();
+                
+                // Calculate day's gain
+                daysGain = totalAssets.subtract(previousTotalValue);
+                
+                // Calculate percentage
+                if (previousTotalValue.compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal percentage = daysGain.divide(previousTotalValue, 4, java.math.RoundingMode.HALF_UP)
+                            .multiply(new BigDecimal("100"));
+                    daysGainPercentage = percentage.setScale(2, java.math.RoundingMode.HALF_UP) + "%";
+                }
             }
-            
-            JsonNode errorNode = chartNode.get("error");
-            if (errorNode != null && !errorNode.isNull()) {
-                return createErrorResponse("UNKNOWN");
-            }
-            
-            JsonNode resultNode = chartNode.get("result").get(0);
-            JsonNode metaNode = resultNode.get("meta");
-            
-            String symbol = metaNode.get("symbol").asText();
-            String name = metaNode.has("shortName") ? metaNode.get("shortName").asText() : symbol;
-            BigDecimal price = new BigDecimal(metaNode.get("regularMarketPrice").toString());
-            String currency = metaNode.get("currency").asText();
-            
-            BigDecimal marketCap = null;
-            if (metaNode.has("marketCap")) {
-                marketCap = new BigDecimal(metaNode.get("marketCap").toString());
-            }
-            
-            Map<String, Object> stockData = new HashMap<>();
-            stockData.put("symbol", symbol);
-            stockData.put("name", name);
-            stockData.put("price", price);
-            stockData.put("currency", currency);
-            stockData.put("marketCap", marketCap);
-            
-            return stockData;
-            
         } catch (Exception e) {
-            return createErrorResponse("UNKNOWN");
+            System.err.println("Exception in getMostRecentBeforeDate: " + e.getMessage());
+            e.printStackTrace();
         }
+        
+        // Format values for display
+        stats.put("totalAssets", formatCurrency(totalAssets));
+        stats.put("investments", formatCurrency(totalPortfolioValue));
+        stats.put("daysGain", formatCurrency(daysGain));
+        stats.put("daysGainPercentage", daysGainPercentage);
+        stats.put("cash", formatCurrency(cash));
+        
+        return stats;
     }
-
+    
     /**
-     * Create error response map
+     * Format BigDecimal to currency string
      * 
-     * @param symbol Stock symbol
-     * @return Map containing error data
+     * @param amount The amount to format
+     * @return Formatted currency string
      */
-    private Map<String, Object> createErrorResponse(String symbol) {
-        Map<String, Object> errorData = new HashMap<>();
-        errorData.put("symbol", symbol);
-        errorData.put("name", null);
-        errorData.put("price", null);
-        errorData.put("currency", null);
-        errorData.put("marketCap", null);
-        errorData.put("error", "Failed to fetch data");
-        return errorData;
+    private String formatCurrency(BigDecimal amount) {
+        return "$" + amount.setScale(2, java.math.RoundingMode.HALF_UP).toString();
     }
     
     /**
