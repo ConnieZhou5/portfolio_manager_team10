@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -114,6 +115,25 @@ public class PortfolioController {
             return ResponseEntity.ok(updatedItem);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * POST /api/portfolio/stock-data
+     * Fetches real-time stock data for given symbols
+     * 
+     * @param request Map containing list of symbols
+     * @return List of stock data maps
+     */
+    @PostMapping("/stock-data")
+    public ResponseEntity<List<Map<String, Object>>> getStockData(@RequestBody Map<String, Object> request) {
+        try {
+            @SuppressWarnings("unchecked")
+            List<String> symbols = (List<String>) request.get("symbols");
+            List<Map<String, Object>> stockData = portfolioService.getStockData(symbols);
+            return ResponseEntity.ok(stockData);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
