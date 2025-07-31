@@ -10,9 +10,10 @@
 !/backend/mvnw
 !/backend/mvnw.cmd
 
-# IntelliJ IDEA
+# vscode
 .idea/
 *.iml
+.vscode/
 
 # Eclipse
 .project

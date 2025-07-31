@@ -11,7 +11,7 @@ const PortfolioTable = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.post('http://localhost:5000/api/portfolio', {
+      const response = await axios.post('http://localhost:8080/api/portfolio/stock-data', {
         symbols,
       });
       setPortfolio(response.data);

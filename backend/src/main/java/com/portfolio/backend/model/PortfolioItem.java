@@ -32,7 +32,7 @@ public class PortfolioItem {
     public PortfolioItem() {
     }
 
-    public PortfolioItem(String ticker, Integer quantity, BigDecimal buyPrice) {
+    public PortfolioItem(String ticker, Integer quantity, BigDecimal buyPrice, LocalDate buyDate) {
         this.ticker = ticker;
         this.quantity = quantity;
         this.buyPrice = buyPrice;
