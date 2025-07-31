@@ -23,9 +23,16 @@ public class PortfolioItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id; // using long to avoid overflow
     
+    @Column(nullable = false, length = 10)
     private String ticker;
+    
+    @Column(nullable = false)
     private Integer quantity;
+    
+    @Column(name = "buy_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal buyPrice; // not using double for precision
+    
+    @Column(name = "buy_date", nullable = false)
     private LocalDate buyDate;    
     
     // Constructor

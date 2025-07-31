@@ -32,6 +32,7 @@ public class CreateDatabase {
 
             stmt.close();
             conn.close();
+            System.out.println("ℹ️ Tables will be created automatically by Spring Boot when the application starts.");
         } catch (SQLException e) {
             System.out.println("❌ Error while creating database: " + e.getMessage());
         }

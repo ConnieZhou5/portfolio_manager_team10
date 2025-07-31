@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { apiService, PortfolioStats } from '../services/api';
 
 type ChangeType = 'positive' | 'negative' | 'neutral'
 
@@ -8,7 +9,6 @@ interface Properties {
     change?: string;
     changeType?: ChangeType;
     icon?: React.ReactNode;
-
 }
 
 const StatsCard: React.FC<Properties> = ({ title, value, change, changeType, icon }) => {
@@ -57,6 +57,61 @@ const StatsCard: React.FC<Properties> = ({ title, value, change, changeType, ico
 };
 
 const PortfolioStatsCards = () => {
+    const [stats, setStats] = useState<PortfolioStats | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                setLoading(true);
+                const data = await apiService.getPortfolioStats();
+                setStats(data);
+                setError(null);
+            } catch (err) {
+                setError('Failed to load portfolio statistics');
+                console.error('Error fetching stats:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchStats();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="p-6 bg-gray-50">
+                <div className="max-w-6xl mx-auto">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        {[...Array(4)].map((_, index) => (
+                            <div key={index} className="bg-white rounded-lg p-4 shadow-sm border-l-4 border-l-purple-500 animate-pulse">
+                                <div className="h-8 bg-gray-200 rounded mb-2"></div>
+                                <div className="h-6 bg-gray-200 rounded"></div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="p-6 bg-gray-50">
+                <div className="max-w-6xl mx-auto">
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <p className="text-red-800">{error}</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (!stats) {
+        return null;
+    }
+
     return (
         <div className="p-6 bg-gray-50">
             <div className="max-w-6xl mx-auto">
@@ -65,7 +120,7 @@ const PortfolioStatsCards = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     <StatsCard
                         title="Total Assets"
-                        value="$2,759.58"
+                        value={stats.totalAssets}
                         icon={
                             <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
@@ -75,7 +130,7 @@ const PortfolioStatsCards = () => {
 
                     <StatsCard
                         title="Investments"
-                        value="$2,474.33"
+                        value={stats.investments}
                         icon={
                             <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -85,11 +140,11 @@ const PortfolioStatsCards = () => {
 
                     <StatsCard
                         title="Day's Gain"
-                        value="$12.88"
-                        change="(0.52%)"
+                        value={stats.daysGain}
+                        change={`(${stats.daysGainPercentage})`}
                         changeType="positive"
                         icon={
-                            <svg className={`w-6 h-6 ${true ? 'text-green-600' : 'text-red-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
                             </svg>
                         }
@@ -97,7 +152,7 @@ const PortfolioStatsCards = () => {
 
                     <StatsCard
                         title="Cash"
-                        value="$285.25"
+                        value={stats.cash}
                         icon={
                             <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
