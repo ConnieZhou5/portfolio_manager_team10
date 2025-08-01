@@ -1,6 +1,7 @@
 const API_BASE_URL = 'http://localhost:8080/api/portfolio';
 const CASH_API_BASE_URL = 'http://localhost:8080/api/cash';
 const TRADE_HISTORY_API_BASE_URL = 'http://localhost:8080/api/trade-history';
+const STOCK_DATA_API_BASE_URL = 'http://localhost:8080/api/stock-data';
 
 export interface PortfolioStats {
   totalAssets: string;
@@ -23,6 +24,24 @@ export interface TradeHistory {
   price: number;
   tradeType: string;
   totalValue: number;
+}
+
+export interface StockData {
+  symbol: string;
+  name?: string;
+  price?: number;
+  currency?: string;
+  marketCap?: number;
+  previousClose?: number;
+  dayGain?: number;
+  dayGainPercent?: number;
+  volume?: number;
+  dayLow?: number;
+  dayHigh?: number;
+  yearLow?: number;
+  yearHigh?: number;
+  marketStatus?: string;
+  error?: string;
 }
 
 export interface PortfolioItem {
@@ -68,6 +87,13 @@ class ApiService {
 
   async getTradesByTicker(ticker: string): Promise<TradeHistory[]> {
     return this.request<TradeHistory[]>(`${TRADE_HISTORY_API_BASE_URL}/ticker/${ticker}`);
+  }
+
+  async getStockData(symbols: string[]): Promise<StockData[]> {
+    return this.request<StockData[]>(`${STOCK_DATA_API_BASE_URL}`, {
+      method: 'POST',
+      body: JSON.stringify({ symbols }),
+    });
   }
 
   async addTrade(trade: Omit<TradeHistory, 'id' | 'totalValue'>): Promise<TradeHistory> {
