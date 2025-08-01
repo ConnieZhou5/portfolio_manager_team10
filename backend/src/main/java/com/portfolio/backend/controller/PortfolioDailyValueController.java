@@ -34,23 +34,4 @@ public class PortfolioDailyValueController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-
-    /**
-     * POST /api/daily-values/create-dummy-daily
-     * Creates dummy daily data for the last 30 days
-     * 
-     * @return ResponseEntity with success message
-     */
-    @PostMapping("/create-dummy-daily")
-    public ResponseEntity<Map<String, Object>> createDummyDailyData() {
-        try {
-            int createdCount = portfolioDailyValueService.createDummyDailyData();
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "Dummy daily data created successfully");
-            response.put("recordsCreated", createdCount);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
 } 

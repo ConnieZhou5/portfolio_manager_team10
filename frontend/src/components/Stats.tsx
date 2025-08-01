@@ -69,7 +69,7 @@ const PortfolioStatsCards = () => {
                 setStats(data);
                 setError(null);
             } catch (err) {
-                setError('Failed to load portfolio statistics');
+                setError('Failed to load portfolio statistics. Check if backend is running.');
                 console.error('Error fetching stats:', err);
             } finally {
                 setLoading(false);
@@ -141,10 +141,10 @@ const PortfolioStatsCards = () => {
                     <StatsCard
                         title="Day's Gain"
                         value={stats.daysGain}
-                        change={`(${stats.daysGainPercentage})`}
-                        changeType="positive"
+                        change={`(${stats.daysGainPercentage.startsWith('-') ? '' : '+'}${stats.daysGainPercentage})`}
+                        changeType={stats.daysGain.startsWith('-$') || stats.daysGain.startsWith('-') ? 'negative' : 'positive'}
                         icon={
-                            <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className={`w-6 h-6 ${stats.daysGain.startsWith('-$') || stats.daysGain.startsWith('-') ? 'text-red-600' : 'text-green-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
                             </svg>
                         }

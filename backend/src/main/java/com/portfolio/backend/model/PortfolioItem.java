@@ -3,7 +3,6 @@ package com.portfolio.backend.model;
 import jakarta.persistence.*; // JPA aka java specification api 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 /**
  * Represents an item in the user's financial portfolio.
@@ -17,6 +16,7 @@ import java.time.LocalDateTime;
  *   buyDate - The date the asset was purchased
  */
 @Entity // This tells JPA that this is a JPA entity
+@Table(name = "portfolio_item")
 public class PortfolioItem {
     
     @Id

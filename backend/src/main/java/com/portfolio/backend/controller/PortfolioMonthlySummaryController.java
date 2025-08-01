@@ -160,37 +160,4 @@ public class PortfolioMonthlySummaryController {
         int deletedCount = portfolioMonthlySummaryService.deleteAllDailyRecords();
         return ResponseEntity.ok("Deleted " + deletedCount + " daily records");
     }
-
-    /**
-     * Create dummy historical data for the last year
-     * 
-     * @return Number of monthly summaries created
-     */
-    @PostMapping("/create-dummy-year")
-    public ResponseEntity<String> createDummyYearData() {
-        int createdCount = portfolioMonthlySummaryService.createDummyHistoricalData();
-        return ResponseEntity.ok("Created " + createdCount + " monthly summaries for the last year");
-    }
-
-    /**
-     * Create comprehensive dummy data (monthly only)
-     * 
-     * @return Map with counts of created records
-     */
-    @PostMapping("/create-dummy-comprehensive")
-    public ResponseEntity<java.util.Map<String, Integer>> createComprehensiveDummyData() {
-        java.util.Map<String, Integer> results = portfolioMonthlySummaryService.createComprehensiveDummyData();
-        return ResponseEntity.ok(results);
-    }
-
-    /**
-     * Create dummy data from June 2024 to current month
-     * 
-     * @return Number of monthly summaries created
-     */
-    @PostMapping("/create-june-2024-to-current")
-    public ResponseEntity<String> createJune2024ToCurrent() {
-        int createdCount = portfolioMonthlySummaryService.createDummyHistoricalData();
-        return ResponseEntity.ok("Created " + createdCount + " monthly summaries from June 2024 to current month");
-    }
 } 
