@@ -1,10 +1,11 @@
 import React from 'react';
 import { PortfolioStatsCards } from '../components/Stats';
-import { Asset } from '../components/Assets';
-import { Performance } from '../components/Perf';
+import { Sells } from '../components/Sell';
 import { Link } from 'react-router-dom';
 
-function Dashboard() {
+
+
+function Sell() {
 
     return (
 
@@ -16,10 +17,10 @@ function Dashboard() {
 
                 <div className="space-x-8 text-lg font-medium text-gray-600 -ml-[940px]">
                     <Link to="/.">
-                        <span className="text-purple-500 border-b-2 border-purple-500 pb-1">Dashboard</span>
+                        <span className="hover:text-black cursor-pointer">Dashboard</span>
                     </Link>
                     <Link to="/Positions">
-                        <span className="hover:text-black cursor-pointer">Positions</span>
+                        <span className="text-purple-500 border-b-2 border-purple-500 pb-1">Positions</span>
                     </Link>
                 </div>
             </div>
@@ -28,14 +29,9 @@ function Dashboard() {
                 <PortfolioStatsCards />
             </div>
 
-            <div>
-                <Asset />
+            <div className="pl-10 pr-8 pb-10">
+                <Sells />
             </div>
-
-            <div className="pb-6" >
-                <Performance />
-            </div>
-
 
         </div>
     );
@@ -43,4 +39,4 @@ function Dashboard() {
 }
 
 
-export { Dashboard };
+export { Sell }
