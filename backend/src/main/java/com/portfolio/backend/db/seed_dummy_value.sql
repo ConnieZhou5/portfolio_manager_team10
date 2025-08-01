@@ -2,6 +2,8 @@
 DELETE FROM portfolio_daily_value;
 DELETE FROM portfolio_monthly_summaries;
 DELETE FROM cash_account;
+DELETE FROM portfolio_item;
+
 
 INSERT INTO portfolio_daily_value (cash_value, investments_value, snapshot_date, total_value) VALUES
 (7000.00, 45000.00, '2025-07-02', 52000.00),
@@ -54,6 +56,12 @@ INSERT INTO portfolio_monthly_summaries
 (5, 1148.89, 1.83, 63811.91, 2025),
 (6, 3521.26, 5.52, 67333.17, 2025),
 (7, -63687.37, -94.59, 3645.80, 2025);
+
+INSERT INTO portfolio_item (buy_date, buy_price, quantity, ticker)
+VALUES
+('2025-06-15', 210.00, 100, 'AAPL'),
+('2025-07-01', 400.00, 80, 'MSFT'),
+('2025-07-20', 440.00, 25, 'GOOGL');
 
 
 

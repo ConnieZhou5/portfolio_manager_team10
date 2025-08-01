@@ -170,3 +170,57 @@ DELETE http://localhost:8080/api/monthly-summaries/delete-all-daily
 
 ###
 
+### 25. Trade History Operations
+### GET all trade history
+GET http://localhost:8080/api/trade-history
+
+###
+
+### 26. GET trade history by ID
+GET http://localhost:8080/api/trade-history/1
+
+###
+
+### 27. GET trades for specific ticker
+GET http://localhost:8080/api/trade-history/ticker/AAPL
+
+###
+
+### 28. GET trades by type (BUY or SELL)
+GET http://localhost:8080/api/trade-history/type/BUY
+
+###
+
+### 29. POST new trade record
+POST http://localhost:8080/api/trade-history
+Content-Type: application/json
+
+{
+  "tradeDate": "2024-12-15",
+  "ticker": "AAPL",
+  "quantity": 10,
+  "price": 150.50,
+  "tradeType": "BUY"
+}
+
+###
+
+### 30. PUT update trade record
+PUT http://localhost:8080/api/trade-history/1
+Content-Type: application/json
+
+{
+  "tradeDate": "2024-12-15",
+  "ticker": "AAPL",
+  "quantity": 15,
+  "price": 155.00,
+  "tradeType": "BUY"
+}
+
+###
+
+### 31. DELETE trade record
+DELETE http://localhost:8080/api/trade-history/1
+
+###
+

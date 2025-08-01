@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PivotTable from './PivotTable';
-
+import { apiService, TradeHistory } from '../services/api';
 
 type Market = 'Market Open' | 'Market Closed'
 
@@ -24,8 +24,27 @@ const Sells = () => {
     const isQuantityInvalid = parseFloat(quantity) <= 0 || isNaN(parseFloat(quantity));
     const [invalidqty, setQtyError] = useState(false);
     const [invalidstock, setStockError] = useState(false);
+    const [sellTrades, setSellTrades] = useState<TradeHistory[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
+    useEffect(() => {
+        const fetchSellTrades = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const trades = await apiService.getTradesByType('SELL');
+                setSellTrades(trades);
+            } catch (err) {
+                setError('Failed to load sell transactions');
+                console.error('Error fetching sell trades:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
 
+        fetchSellTrades();
+    }, []);
 
     const getMarketStatusStyles = () => {
         if (stockData.MarketStatus === 'Market Open') {
@@ -50,6 +69,14 @@ const Sells = () => {
         return (price * qty).toFixed(2);
     };
 
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            month: 'numeric',
+            day: 'numeric',
+            year: 'numeric'
+        });
+    };
 
     const [expandedRows, setExpandedRows] = useState<{ [key: string]: boolean }>({});
     const [searchQuery, setSearchQuery] = useState<string>(''); // State for search query
@@ -57,9 +84,6 @@ const Sells = () => {
     const toggleRow = (symbol: string) => {
         setExpandedRows(prev => ({ ...prev, [symbol]: !prev[symbol] }));
     };
-
-
-
 
     // Filter data based on the search query
     const filteredData = portfolioData.filter(row => row.symbol.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -227,42 +251,28 @@ const Sells = () => {
                     <div className="bg-gray-100 rounded-lg overflow-hidden shadow-sm">
                         <h3 className="text-gray-600 pt-6 pb-2 pl-6 mb-1 font-medium text-left">Sell Transactions Log</h3>
                         <div className="max-h-96 overflow-y-auto">
-                            <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left border-b border-gray-100">
-                                Sold 5 AAPL @ $188.98
-                                <br></br>
-                                Total: $944.90
-                                <span className="text-sm text-gray-500 block text-right">7/10/2025</span>
-                            </div>
-                            <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left border-b border-gray-100">
-                                Sold 1 AAPL @ $188.98
-                                <br></br>
-                                Total: $188.98
-                                <span className="text-sm text-gray-500 block text-right">7/9/2025</span>
-                            </div>
-                            <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left border-b border-gray-100">
-                                Sold 1 AAPL @ $188.98
-                                <br></br>
-                                Total: $188.98
-                                <span className="text-sm text-gray-500 block text-right">7/9/2025</span>
-                            </div>
-                            <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left border-b border-gray-100">
-                                Sold 1 AAPL @ $188.98
-                                <br></br>
-                                Total: $188.98
-                                <span className="text-sm text-gray-500 block text-right">7/9/2025</span>
-                            </div>
-                            <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left border-b border-gray-100">
-                                Sold 1 AAPL @ $188.98
-                                <br></br>
-                                Total: $188.98
-                                <span className="text-sm text-gray-500 block text-right">7/9/2025</span>
-                            </div>
-                            <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left">
-                                Sold 1 AAPL @ $188.98
-                                <br></br>
-                                Total: $188.98
-                                <span className="text-sm text-gray-500 block text-right">7/9/2025</span>
-                            </div>
+                            {loading ? (
+                                <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left">
+                                    Loading sell transactions...
+                                </div>
+                            ) : error ? (
+                                <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-red-500 text-left">
+                                    {error}
+                                </div>
+                            ) : sellTrades.length === 0 ? (
+                                <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left">
+                                    No sell transactions found
+                                </div>
+                            ) : (
+                                sellTrades.map((trade, index) => (
+                                    <div key={trade.id} className={`pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left ${index < sellTrades.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                                        Sold {trade.quantity} {trade.ticker} @ ${trade.price.toFixed(2)}
+                                        <br></br>
+                                        Total: ${trade.totalValue.toFixed(2)}
+                                        <span className="text-sm text-gray-500 block text-right">{formatDate(trade.tradeDate)}</span>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>

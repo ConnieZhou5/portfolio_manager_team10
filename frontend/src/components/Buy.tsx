@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-
+import { apiService, TradeHistory } from '../services/api';
 
 type Market = 'Market Open' | 'Market Closed'
 
@@ -23,7 +23,27 @@ const Buys = () => {
     const [orderType, setOrderType] = useState('Market');
     const [cashOnHand, setCashOnHand] = useState(500); // Default cash value
     const [invalidqty, setInvalidqty] = useState(false);
+    const [buyTrades, setBuyTrades] = useState<TradeHistory[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
+    useEffect(() => {
+        const fetchBuyTrades = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const trades = await apiService.getTradesByType('BUY');
+                setBuyTrades(trades);
+            } catch (err) {
+                setError('Failed to load buy transactions');
+                console.error('Error fetching buy trades:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchBuyTrades();
+    }, []);
 
     const calculateTotal = () => {
         const price = parseFloat(stockData.Price.replace('$', ''));
@@ -50,6 +70,15 @@ const Buys = () => {
                 textClass: 'text-red-700'
             };
         }
+    };
+
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            month: 'numeric',
+            day: 'numeric',
+            year: 'numeric'
+        });
     };
 
     return (
@@ -145,13 +174,6 @@ const Buys = () => {
                 <div className="space-y-6">
                     {/* Buy Form */}
                     <div className="bg-purple-50 rounded-2xl p-10 space-y-6">
-
-                        {invalidqty && (
-                            <div className="bg-red-100 text-red-700 text-sm p-2 rounded-lg">
-                                ❌ Not Valid Quantity
-                            </div>
-                        )}
-
                         {/* Symbol Input */}
                         <div className="flex">
                             <label className="block text-md text-gray-700 mt-2">Symbol</label>
@@ -231,42 +253,28 @@ const Buys = () => {
                     <div className="bg-gray-100 rounded-lg overflow-hidden shadow-sm">
                         <h3 className="text-gray-600 pt-6 pb-2 pl-6 mb-1 font-medium text-left">Buy Transactions Log</h3>
                         <div className="max-h-96 overflow-y-auto">
-                            <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left border-b border-gray-100">
-                                Bought 5 AAPL @ $188.98
-                                <br></br>
-                                Total: $944.90
-                                <span className="text-sm text-gray-500 block text-right">7/10/2025</span>
-                            </div>
-                            <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left border-b border-gray-100">
-                                Bought 1 AAPL @ $188.98
-                                <br></br>
-                                Total: $188.98
-                                <span className="text-sm text-gray-500 block text-right">7/9/2025</span>
-                            </div>
-                            <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left border-b border-gray-100">
-                                Bought 1 AAPL @ $188.98
-                                <br></br>
-                                Total: $188.98
-                                <span className="text-sm text-gray-500 block text-right">7/9/2025</span>
-                            </div>
-                            <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left border-b border-gray-100">
-                                Bought 1 AAPL @ $188.98
-                                <br></br>
-                                Total: $188.98
-                                <span className="text-sm text-gray-500 block text-right">7/9/2025</span>
-                            </div>
-                            <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left border-b border-gray-100">
-                                Bought 1 AAPL @ $188.98
-                                <br></br>
-                                Total: $188.98
-                                <span className="text-sm text-gray-500 block text-right">7/9/2025</span>
-                            </div>
-                            <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left">
-                                Bought 1 AAPL @ $188.98
-                                <br></br>
-                                Total: $188.98
-                                <span className="text-sm text-gray-500 block text-right">7/9/2025</span>
-                            </div>
+                            {loading ? (
+                                <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left">
+                                    Loading buy transactions...
+                                </div>
+                            ) : error ? (
+                                <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-red-500 text-left">
+                                    {error}
+                                </div>
+                            ) : buyTrades.length === 0 ? (
+                                <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left">
+                                    No buy transactions found
+                                </div>
+                            ) : (
+                                buyTrades.map((trade, index) => (
+                                    <div key={trade.id} className={`pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left ${index < buyTrades.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                                        Bought {trade.quantity} {trade.ticker} @ ${trade.price.toFixed(2)}
+                                        <br></br>
+                                        Total: ${trade.totalValue.toFixed(2)}
+                                        <span className="text-sm text-gray-500 block text-right">{formatDate(trade.tradeDate)}</span>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>
