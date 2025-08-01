@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import PivotTable from './PivotTable';
 
 
 type Market = 'Market Open' | 'Market Closed'
@@ -9,10 +10,10 @@ const stockData = {
 };
 
 // List of data for the table (you can modify this to pull data from an API or elsewhere)
-const tableData = [
-    { symbol: 'AMD', lastPrice: 12.00, changeDollar: 12.00, changePercent: 12.00, qty: 12, pricePaid: 12.00, dayGain: 12.00, totalGain: 12.00, totalGainPercent: 12.00, value: 12.00, date: '07/09/2025' },
-    { symbol: 'AMZ', lastPrice: 34.00, changeDollar: 34.00, changePercent: 34.00, qty: 1, pricePaid: 34.00, dayGain: 34.00, totalGain: 34.00, totalGainPercent: 34.00, value: 34.00, date: '06/08/2025' },
-    { symbol: 'ARKK', lastPrice: 44.00, changeDollar: 44.00, changePercent: 44.00, qty: 6, pricePaid: 44.00, dayGain: 44.00, totalGain: 44.00, totalGainPercent: 44.00, value: 44.00, date: '06/08/2025' }
+const portfolioData = [
+    { symbol: 'AAPL', lastPrice: 190.5, change: -1.2, changePercent: -0.63, quantity: 10, pricePaid: 185, daysGain: -12, totalGain: 55, totalGainPercent: 30, value: 1905, date: '08/01/25' },
+    { symbol: 'AAPL', lastPrice: 191.0, change: -0.5, changePercent: -0.26, quantity: 20, pricePaid: 180, daysGain: -10, totalGain: 75, totalGainPercent: 41.6, value: 3820, date: '07/14/25' },
+    { symbol: 'GOOG', lastPrice: 130.0, change: 2.0, changePercent: 1.56, quantity: 5, pricePaid: 125, daysGain: 10, totalGain: 25, totalGainPercent: 20, value: 650, date: '07/31/25' }
 ];
 
 const Sells = () => {
@@ -43,7 +44,7 @@ const Sells = () => {
     };
 
     const calculateTotal = () => {
-        const stock = tableData.find(item => item.symbol === symbol);
+        const stock = portfolioData.find(item => item.symbol === symbol);
         const price = stock ? stock.lastPrice : 0;
         const qty = parseFloat(quantity) || 0;
         return (price * qty).toFixed(2);
@@ -61,7 +62,7 @@ const Sells = () => {
 
 
     // Filter data based on the search query
-    const filteredData = tableData.filter(row => row.symbol.toLowerCase().includes(searchQuery.toLowerCase()));
+    const filteredData = portfolioData.filter(row => row.symbol.toLowerCase().includes(searchQuery.toLowerCase()));
 
     return (
         <div className="bg-white rounded-2xl p-8 max-w-6xl mx-auto shadow-lg">
@@ -109,66 +110,7 @@ const Sells = () => {
 
                     {/* Table Section */}
                     <div className="col-span-2 bg-white rounded-2xl p-6 shadow-md text-xs">
-                        <table className="w-full text-xs text-left">
-                            <thead className="text-gray-700 border-b align-center h-8">
-                                <tr>
-                                    <th>Symbol</th>
-                                    <th>Last Price $</th>
-                                    <th>Change $</th>
-                                    <th>Change %</th>
-                                    <th>Qty #</th>
-                                    <th>Price Paid $</th>
-                                    <th>Day's Gain $</th>
-                                    <th>Total Gain $</th>
-                                    <th>Total Gain %</th>
-                                    <th>Value $</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {/* Filtered Data */}
-                                {filteredData.map((row) => (
-                                    <React.Fragment key={row.symbol}>
-                                        <tr className="border-b cursor-pointer text-center align-center h-8" onClick={() => toggleRow(row.symbol)}>
-                                            <td>
-                                                <span className="text-black-200 hover:underline">{expandedRows[row.symbol] ? '▼' : '▶'} {row.symbol}</span>
-                                            </td>
-                                            <td>{row.lastPrice.toFixed(2)}</td>
-                                            <td>{row.changeDollar.toFixed(2)}</td>
-                                            <td>{row.changePercent.toFixed(2)}</td>
-                                            <td>{row.qty}</td>
-                                            <td>{row.pricePaid.toFixed(2)}</td>
-                                            <td>{row.dayGain.toFixed(2)}</td>
-                                            <td>{row.totalGain.toFixed(2)}</td>
-                                            <td>{row.totalGainPercent.toFixed(2)}</td>
-                                            <td>{row.value.toFixed(2)}</td>
-                                        </tr>
-                                        {expandedRows[row.symbol] && (
-                                            <tr className="bg-gray-100 text-gray-500 text-center align-center h-8">
-                                                <td>{row.date}</td>
-                                                <td>{row.lastPrice.toFixed(2)}</td>
-                                                <td>{row.changeDollar.toFixed(2)}</td>
-                                                <td>{row.changePercent.toFixed(2)}</td>
-                                                <td>{row.qty}</td>
-                                                <td>{row.pricePaid.toFixed(2)}</td>
-                                                <td>{row.dayGain.toFixed(2)}</td>
-                                                <td>{row.totalGain.toFixed(2)}</td>
-                                                <td>{row.totalGainPercent.toFixed(2)}</td>
-                                                <td>{row.value.toFixed(2)}</td>
-                                            </tr>
-                                        )}
-                                    </React.Fragment>
-                                ))}
-                                {/* Total Row... */}
-                                <tr className="font-semibold border-t h-8">
-                                    <td colSpan={5} className="text-left pl-4">Total</td>
-                                    <td className="text-center align-center">2,241.84</td>
-                                    <td className="text-center align-center">12.88</td>
-                                    <td className="text-center align-center">232.44</td>
-                                    <td className="text-center align-center">10.37</td>
-                                    <td className="text-center align-center">2,474.33</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <PivotTable data={portfolioData} searchText={searchQuery} />
                     </div>
 
                 </div>
@@ -202,9 +144,9 @@ const Sells = () => {
 
                                 onChange={(e) => {
                                     const value = e.target.value;
-                                    const stock = tableData.find(item => item.symbol === symbol);
+                                    const stock = portfolioData.find(item => item.symbol === symbol);
 
-                                    const maxQty = stock ? stock.qty : 0;
+                                    const maxQty = stock ? stock.quantity : 0;
 
                                     if (maxQty >= 0) {
                                         setSymbol(value);
@@ -253,8 +195,8 @@ const Sells = () => {
                             <button
                                 className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-6 rounded-lg transition-colors"
                                 onClick={() => {
-                                    const stock = tableData.find(item => item.symbol === symbol);
-                                    const maxQty = stock ? stock.qty : 0;
+                                    const stock = portfolioData.find(item => item.symbol === symbol);
+                                    const maxQty = stock ? stock.quantity : 0;
 
                                     if (maxQty == 0) {
                                         setStockError(true);
