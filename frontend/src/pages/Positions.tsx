@@ -7,7 +7,7 @@ function Positions() {
 
     return (
 
-        <div className="bg-gray-50">
+        <div className="bg-gradient-to-br from-purple-50 via-indigo-50 to-pink-50 min-h-screen">
 
             <div className="pt-6 bg-white sticky top-0 z-10 shadow-sm">
 

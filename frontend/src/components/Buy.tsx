@@ -21,11 +21,19 @@ const Buys = () => {
     const [symbol, setSymbol] = useState(stockData.Symbol);
     const [quantity, setQuantity] = useState('');
     const [orderType, setOrderType] = useState('Market');
+    const [cashOnHand, setCashOnHand] = useState(500); // Default cash value
+    const [invalidqty, setInvalidqty] = useState(false);
+
 
     const calculateTotal = () => {
         const price = parseFloat(stockData.Price.replace('$', ''));
         const qty = parseFloat(quantity) || 0;
         return (price * qty).toFixed(2);
+    };
+
+    const exceedCash = () => {
+        const total = parseFloat(calculateTotal());
+        return total > cashOnHand && parseFloat(quantity) > 0;
     };
 
     const getMarketStatusStyles = () => {
@@ -137,6 +145,13 @@ const Buys = () => {
                 <div className="space-y-6">
                     {/* Buy Form */}
                     <div className="bg-purple-50 rounded-2xl p-10 space-y-6">
+
+                        {invalidqty && (
+                            <div className="bg-red-100 text-red-700 text-sm p-2 rounded-lg">
+                                ❌ Not Valid Quantity
+                            </div>
+                        )}
+
                         {/* Symbol Input */}
                         <div className="flex">
                             <label className="block text-md text-gray-700 mt-2">Symbol</label>
@@ -180,10 +195,33 @@ const Buys = () => {
 
                         {/* Action Buttons */}
                         <div className="flex space-x-5 pt-4">
-                            <button className="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-medium py-3 px-6 rounded-lg transition-colors">
+                            <button className="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+                                onClick={() => {
+                                    const total = parseFloat(calculateTotal());
+                                    const qty = parseFloat(quantity) || 0;
+
+                                    if (qty <= 0 || !Number.isInteger(qty)) {
+                                        setInvalidqty(true);
+                                        return;
+                                    }
+
+                                    if (total > cashOnHand) {
+                                        setInvalidqty(true);
+                                        return;
+                                    } 
+                                    // If validation passes
+                                    setInvalidqty(false);
+                                    
+                                    setQuantity('');
+
+                                }}> 
                                 Buy
                             </button>
-                            <button className="flex-1 border border-gray-300 bg-white hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 rounded-lg transition-colors">
+                            <button className="flex-1 border border-gray-300 bg-white hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 rounded-lg transition-colors"
+                                onClick={() => {
+                                    setQuantity('');
+                                    setInvalidqty(false);
+                                }}>
                                 Cancel
                             </button>
                         </div>
