@@ -33,3 +33,12 @@ CREATE TABLE cash_account (
     balance DECIMAL(10,2) NOT NULL,
     last_updated DATETIME NOT NULL
 );
+
+CREATE TABLE trade_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    trade_date DATE NOT NULL,
+    ticker VARCHAR(12) NOT NULL,
+    quantity INT NOT NULL,
+    price DECIMAL(12,2) NOT NULL,
+    trade_type ENUM('BUY', 'SELL') NOT NULL
+);
