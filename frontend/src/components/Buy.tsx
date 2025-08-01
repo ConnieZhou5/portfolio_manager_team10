@@ -1,24 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { apiService, TradeHistory } from '../services/api';
+import { apiService, TradeHistory, StockData } from '../services/api';
 
 type Market = 'Market Open' | 'Market Closed'
 
-const stockData = {
-    Symbol: 'AMD',
-    Name: 'ADVANCED MICRO DEVICES INC COM',
-    Price: '$173.66', //reg market price
-    DayGain: '+7.19 (+4.32%)', //reg market price - chart prev close
-    Open: '$208.27', //open
-    PrevClose: '$209.05', // chartPreviousClose
-    Volume: '39,000,000', // regularMarketVolume
-    DayRange: '$207.00 - $209.10', // regularMarketDayLow, regularMarketDayHigh
-    WeekRange52: '$76.48 - $209.10', // fiftyTwoWeekLow, fiftyTwoWeekHigh
-    MarketStatus: 'Market Open' //need to calculate with time
-};
+interface StockInfo {
+    Symbol: string;
+    Name: string;
+    Price: string;
+    DayGain: string;
+    Open: string;
+    PrevClose: string;
+    Volume: string;
+    DayRange: string;
+    WeekRange52: string;
+    MarketStatus: Market;
+}
 
 const Buys = () => {
-    const [symbol, setSymbol] = useState(stockData.Symbol);
+    const [symbol, setSymbol] = useState('');
     const [quantity, setQuantity] = useState('');
     const [orderType, setOrderType] = useState('Market');
     const [cashOnHand, setCashOnHand] = useState(500); // Default cash value
@@ -26,6 +26,10 @@ const Buys = () => {
     const [buyTrades, setBuyTrades] = useState<TradeHistory[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [stockInfo, setStockInfo] = useState<StockInfo | null>(null);
+    const [searchLoading, setSearchLoading] = useState(false);
+    const [searchError, setSearchError] = useState<string | null>(null);
+    const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         const fetchBuyTrades = async () => {
@@ -45,8 +49,83 @@ const Buys = () => {
         fetchBuyTrades();
     }, []);
 
+    const searchStock = async (ticker: string) => {
+        if (!ticker.trim()) {
+            setStockInfo(null);
+            setSearchError(null);
+            return;
+        }
+
+        try {
+            setSearchLoading(true);
+            setSearchError(null);
+            const stockData = await apiService.getStockData([ticker.toUpperCase()]);
+            
+            if (stockData.length > 0 && stockData[0].error) {
+                setSearchError(`Error fetching data for ${ticker}: ${stockData[0].error}`);
+                setStockInfo(null);
+            } else if (stockData.length > 0) {
+                const stock = stockData[0];
+                const price = stock.price || 0;
+                const previousClose = stock.previousClose || price * 0.98;
+                const dayGain = stock.dayGain || (price - previousClose);
+                const dayGainPercent = stock.dayGainPercent || ((dayGain / previousClose) * 100);
+                const volume = stock.volume || 0;
+                const dayLow = stock.dayLow || (price * 0.97); //placing a dummy buffer 
+                const dayHigh = stock.dayHigh || (price * 1.03);
+                const yearLow = stock.yearLow || (price * 0.7);
+                const yearHigh = stock.yearHigh || (price * 1.3);
+                const marketStatus = stock.marketStatus || 'Market Open';
+                
+                setStockInfo({
+                    Symbol: stock.symbol,
+                    Name: stock.name || `${stock.symbol} Stock`,
+                    Price: `$${price.toFixed(2)}`,
+                    DayGain: `${dayGain >= 0 ? '+' : ''}${dayGain.toFixed(2)} (${dayGainPercent >= 0 ? '+' : ''}${dayGainPercent.toFixed(2)}%)`,
+                    Open: `$${previousClose.toFixed(2)}`,
+                    PrevClose: `$${previousClose.toFixed(2)}`,
+                    Volume: volume > 0 ? `${(volume / 1000000).toFixed(0)}M` : 'N/A',
+                    DayRange: `$${dayLow.toFixed(2)} - $${dayHigh.toFixed(2)}`,
+                    WeekRange52: `$${yearLow.toFixed(2)} - $${yearHigh.toFixed(2)}`,
+                    MarketStatus: marketStatus as Market
+                });
+                setSearchError(null);
+            } else {
+                setSearchError(`No data found for ${ticker}`);
+                setStockInfo(null);
+            }
+        } catch (err) {
+            setSearchError(`Failed to fetch stock data for ${ticker}`);
+            console.error('Error fetching stock data:', err);
+            setStockInfo(null);
+        } finally {
+            setSearchLoading(false);
+        }
+    };
+
+    const handleSymbolChange = (value: string) => {
+        setSymbol(value);
+        
+        // Clear previous timeout
+        if (searchTimeout) {
+            clearTimeout(searchTimeout);
+        }
+        
+        if (value.trim()) {
+            // Set new timeout
+            const timeoutId = setTimeout(() => {
+                searchStock(value);
+            }, 500);
+            setSearchTimeout(timeoutId);
+        } else {
+            setStockInfo(null);
+            setSearchError(null);
+        }
+    };
+
     const calculateTotal = () => {
-        const price = parseFloat(stockData.Price.replace('$', ''));
+        if (!stockInfo) return '0.00';
+        const price = parseFloat(stockInfo.Price.replace('$', ''));
         const qty = parseFloat(quantity) || 0;
         return (price * qty).toFixed(2);
     };
@@ -57,7 +136,15 @@ const Buys = () => {
     };
 
     const getMarketStatusStyles = () => {
-        if (stockData.MarketStatus === 'Market Open') {
+        if (!stockInfo) {
+            return {
+                containerClass: 'bg-gray-50 border-gray-200',
+                dotClass: 'bg-gray-500',
+                textClass: 'text-gray-700'
+            };
+        }
+        
+        if (stockInfo.MarketStatus === 'Market Open') {
             return {
                 containerClass: 'bg-green-50 border-green-200',
                 dotClass: 'bg-green-500 animate-pulse',
@@ -114,58 +201,77 @@ const Buys = () => {
                             className="block w-full pl-10 pr-3 py-3 rounded-lg bg-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                             placeholder="Search stocks..."
                             value={symbol}
-                            onChange={(e) => setSymbol(e.target.value)}
+                            onChange={(e) => handleSymbolChange(e.target.value)}
                         />
+                        {searchLoading && (
+                            <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-500"></div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Stock Header */}
-                    <div className="mb-6">
-                        <div className="flex items-baseline justify-between">
-                            <div className="flex items-baseline space-x-4">
-                                <h1 className="text-3xl font-bold text-gray-900">{stockData.Symbol}</h1>
-                                <span className="text-lg text-gray-600">{stockData.Name}</span>
+                    {stockInfo ? (
+                        <div className="mb-6">
+                            <div className="flex items-baseline justify-between">
+                                <div className="flex items-baseline space-x-4">
+                                    <h1 className="text-3xl font-bold text-gray-900">{stockInfo.Symbol}</h1>
+                                    <span className="text-lg text-gray-600">{stockInfo.Name}</span>
+                                </div>
+                                <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-full border ${getMarketStatusStyles().containerClass}`}>
+                                    <div className={`w-2 h-2 rounded-full ${getMarketStatusStyles().dotClass}`}></div>
+                                    <span className={`text-sm font-medium ${getMarketStatusStyles().textClass}`}>
+                                        {stockInfo.MarketStatus}
+                                    </span>
+                                </div>
                             </div>
-                            <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-full border ${getMarketStatusStyles().containerClass}`}>
-                                <div className={`w-2 h-2 rounded-full ${getMarketStatusStyles().dotClass}`}></div>
-                                <span className={`text-sm font-medium ${getMarketStatusStyles().textClass}`}>
-                                    {stockData.MarketStatus}
+                            <div className="flex items-baseline space-x-4">
+                                <span className="text-3xl font-bold text-gray-900">{stockInfo.Price}</span>
+                                <span className={`text-lg font-medium ${stockInfo.DayGain.includes('+') ? 'text-green-600' : 'text-red-600'}`}>
+                                    {stockInfo.DayGain}
                                 </span>
                             </div>
                         </div>
-                        <div className="flex items-baseline space-x-4">
-                            <span className="text-3xl font-bold text-gray-900">{stockData.Price}</span>
-                            <span className="text-lg text-green-600 font-medium">{stockData.DayGain}</span>
+                    ) : searchError ? (
+                        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                            <p className="text-red-800">{searchError}</p>
                         </div>
-                    </div>
+                    ) : (
+                        <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                            <p className="text-gray-600">Enter a stock symbol to search for real-time data</p>
+                        </div>
+                    )}
 
                     {/* Stock Details */}
-                    <div className="space-y-4">
-                        <div className="flex justify-between shadow-sm">
-                            <span className="text-gray-600">Open</span>
-                            <span className="font-medium text-gray-900">{stockData.Open}</span>
+                    {stockInfo && (
+                        <div className="space-y-4">
+                            <div className="flex justify-between shadow-sm">
+                                <span className="text-gray-600">Open</span>
+                                <span className="font-medium text-gray-900">{stockInfo.Open}</span>
+                            </div>
+                            <div className="flex justify-between shadow-sm">
+                                <span className="text-gray-600">Previous Close</span>
+                                <span className="font-medium text-gray-900">{stockInfo.PrevClose}</span>
+                            </div>
+                            <div className="flex justify-between shadow-sm">
+                                <span className="text-gray-600">Volume</span>
+                                <span className="font-medium text-gray-900">{stockInfo.Volume}</span>
+                            </div>
+                            <div className="flex justify-between shadow-sm">
+                                <span className="text-gray-600">Day Range</span>
+                                <span className="font-medium text-gray-900">{stockInfo.DayRange}</span>
+                            </div>
+                            <div className="flex justify-between shadow-sm">
+                                <span className="text-gray-600">52 Week Range</span>
+                                <span className="font-medium text-gray-900">{stockInfo.WeekRange52}</span>
+                            </div>
                         </div>
-                        <div className="flex justify-between shadow-sm">
-                            <span className="text-gray-600">Previous Close</span>
-                            <span className="font-medium text-gray-900">{stockData.PrevClose}</span>
-                        </div>
-                        <div className="flex justify-between shadow-sm">
-                            <span className="text-gray-600">Volume</span>
-                            <span className="font-medium text-gray-900">{stockData.Volume}</span>
-                        </div>
-                        <div className="flex justify-between shadow-sm">
-                            <span className="text-gray-600">Day Range</span>
-                            <span className="font-medium text-gray-900">{stockData.DayRange}</span>
-                        </div>
-                        <div className="flex justify-between shadow-sm">
-                            <span className="text-gray-600">52 Week Range</span>
-                            <span className="font-medium text-gray-900">{stockData.WeekRange52}</span>
-                        </div>
-                    </div>
+                    )}
 
                     {/* placeholder */}
                     <div className="mt-12 space-y-4">
                         <div className="h-[500px] bg-gray-50 rounded-lg flex items-center justify-center">
-                            <span className="text-gray-400">placeholder</span>
+                            <span className="text-gray-400">Innovation brewing. Stay tuned.</span>
                         </div>
                     </div>
                 </div>
@@ -178,7 +284,7 @@ const Buys = () => {
                         <div className="flex">
                             <label className="block text-md text-gray-700 mt-2">Symbol</label>
                             <div className="ml-[59px] w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-medium">
-                                {stockData.Symbol}
+                                {stockInfo ? stockInfo.Symbol : 'Enter symbol'}
                             </div>
                         </div>
 
@@ -217,7 +323,9 @@ const Buys = () => {
 
                         {/* Action Buttons */}
                         <div className="flex space-x-5 pt-4">
-                            <button className="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+                            <button 
+                                className="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-medium py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled={!stockInfo || parseFloat(quantity) <= 0}
                                 onClick={() => {
                                     const total = parseFloat(calculateTotal());
                                     const qty = parseFloat(quantity) || 0;
