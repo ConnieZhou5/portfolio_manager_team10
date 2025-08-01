@@ -17,10 +17,12 @@ const stockData = {
     MarketStatus: 'Market Open' //need to calculate with time
 };
 
-const Buys = () => {
+const Sells = () => {
     const [symbol, setSymbol] = useState(stockData.Symbol);
     const [quantity, setQuantity] = useState('');
     const [orderType, setOrderType] = useState('Market');
+    // const [quantity, setQuantity] = useState();
+    const isQuantityInvalid = parseFloat(quantity) <= 0 || isNaN(parseFloat(quantity));
 
     const calculateTotal = () => {
         const price = parseFloat(stockData.Price.replace('$', ''));
@@ -44,18 +46,37 @@ const Buys = () => {
         }
     };
 
+
+    const [expandedRows, setExpandedRows] = useState<{ [key: string]: boolean }>({});
+    const [searchQuery, setSearchQuery] = useState<string>(''); // State for search query
+
+    const toggleRow = (symbol: string) => {
+        setExpandedRows(prev => ({ ...prev, [symbol]: !prev[symbol] }));
+    };
+
+    // List of data for the table (you can modify this to pull data from an API or elsewhere)
+    const tableData = [
+        { symbol: 'AMD', lastPrice: 12.00, changeDollar: 12.00, changePercent: 12.00, qty: 12, pricePaid: 12.00, dayGain: 12.00, totalGain: 12.00, totalGainPercent: 12.00, value: 12.00, date: '07/09/2025' },
+        { symbol: 'AMZ', lastPrice: 34.00, changeDollar: 34.00, changePercent: 34.00, qty: 1, pricePaid: 34.00, dayGain: 34.00, totalGain: 34.00, totalGainPercent: 34.00, value: 34.00, date: '06/08/2025' },
+        { symbol: 'ARKK', lastPrice: 44.00, changeDollar: 44.00, changePercent: 44.00, qty: 6, pricePaid: 44.00, dayGain: 44.00, totalGain: 44.00, totalGainPercent: 44.00, value: 44.00, date: '06/08/2025' }
+    ];
+
+
+    // Filter data based on the search query
+    const filteredData = tableData.filter(row => row.symbol.toLowerCase().includes(searchQuery.toLowerCase()));
+
     return (
         <div className="bg-white rounded-2xl p-8 max-w-6xl mx-auto shadow-lg">
             {/* Header Tabs */}
             <div className="border-b border-gray-200 mb-8">
                 <div className="flex space-x-8">
                     <Link to="/Positions">
-                        <button className="text-purple-500 border-b-2 border-purple-500 pb-2 px-1 font-medium">
+                        <button className="text-gray-500 hover:text-gray-700 pb-2 px-1 font-medium">
                             Buy
                         </button>
                     </Link>
                     <Link to="/Positions/Sell">
-                        <button className="text-gray-500 hover:text-gray-700 pb-2 px-1 font-medium">
+                        <button className="text-orange-500 border-b-2 border-orange-500 pb-2 px-1 font-medium">
                             Sell
                         </button>
                     </Link>
@@ -74,69 +95,88 @@ const Buys = () => {
                         </div>
                         <input
                             type="text"
-                            className="block w-full pl-10 pr-3 py-3 rounded-lg bg-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            className="block w-full pl-10 pr-3 py-3 rounded-lg bg-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                             placeholder="Search stocks..."
-                            value={symbol}
-                            onChange={(e) => setSymbol(e.target.value)}
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
 
-                    {/* Stock Header */}
-                    <div className="mb-6">
-                        <div className="flex items-baseline justify-between">
-                            <div className="flex items-baseline space-x-4">
-                                <h1 className="text-3xl font-bold text-gray-900">{stockData.Symbol}</h1>
-                                <span className="text-lg text-gray-600">{stockData.Name}</span>
-                            </div>
-                            <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-full border ${getMarketStatusStyles().containerClass}`}>
-                                <div className={`w-2 h-2 rounded-full ${getMarketStatusStyles().dotClass}`}></div>
-                                <span className={`text-sm font-medium ${getMarketStatusStyles().textClass}`}>
-                                    {stockData.MarketStatus}
-                                </span>
-                            </div>
-                        </div>
-                        <div className="flex items-baseline space-x-4">
-                            <span className="text-3xl font-bold text-gray-900">{stockData.Price}</span>
-                            <span className="text-lg text-green-600 font-medium">{stockData.DayGain}</span>
-                        </div>
+                    {/* Table Section */}
+                    <div className="col-span-2 bg-white rounded-2xl p-6 shadow-md text-xs">
+                        <table className="w-full text-xs text-left">
+                            <thead className="text-gray-500 border-b align-center h-8">
+                                <tr>
+                                    <th>Symbol</th>
+                                    <th>Last Price $</th>
+                                    <th>Change $</th>
+                                    <th>Change %</th>
+                                    <th>Qty #</th>
+                                    <th>Price Paid $</th>
+                                    <th>Day's Gain $</th>
+                                    <th>Total Gain $</th>
+                                    <th>Total Gain %</th>
+                                    <th>Value $</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {/* Filtered Data */}
+                                {filteredData.map((row) => (
+                                    <React.Fragment key={row.symbol}>
+                                        <tr className="border-b cursor-pointer text-center align-center h-8" onClick={() => toggleRow(row.symbol)}>
+                                            <td>
+                                                <span className="text-black-600 hover:underline">{expandedRows[row.symbol] ? '▼' : '▶'} {row.symbol}</span>
+                                            </td>
+                                            <td>{row.lastPrice.toFixed(2)}</td>
+                                            <td>{row.changeDollar.toFixed(2)}</td>
+                                            <td>{row.changePercent.toFixed(2)}</td>
+                                            <td>{row.qty}</td>
+                                            <td>{row.pricePaid.toFixed(2)}</td>
+                                            <td>{row.dayGain.toFixed(2)}</td>
+                                            <td>{row.totalGain.toFixed(2)}</td>
+                                            <td>{row.totalGainPercent.toFixed(2)}</td>
+                                            <td>{row.value.toFixed(2)}</td>
+                                        </tr>
+                                        {expandedRows[row.symbol] && (
+                                            <tr className="bg-gray-100 text-gray-700 text-center align-center h-8">
+                                                <td>{row.date}</td>
+                                                <td>{row.lastPrice.toFixed(2)}</td>
+                                                <td>{row.changeDollar.toFixed(2)}</td>
+                                                <td>{row.changePercent.toFixed(2)}</td>
+                                                <td>{row.qty}</td>
+                                                <td>{row.pricePaid.toFixed(2)}</td>
+                                                <td>{row.dayGain.toFixed(2)}</td>
+                                                <td>{row.totalGain.toFixed(2)}</td>
+                                                <td>{row.totalGainPercent.toFixed(2)}</td>
+                                                <td>{row.value.toFixed(2)}</td>
+                                            </tr>
+                                        )}
+                                    </React.Fragment>
+                                ))}
+                                {/* Total Row... */}
+                                <tr className="font-semibold border-t align-center h-8">
+                                    <td colSpan={5} className="text-right pr-2">Total</td>
+                                    <td>2,241.84</td>
+                                    <td>12.88</td>
+                                    <td>232.44</td>
+                                    <td>10.37</td>
+                                    <td>2,474.33</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
 
-                    {/* Stock Details */}
-                    <div className="space-y-4">
-                        <div className="flex justify-between shadow-sm">
-                            <span className="text-gray-600">Open</span>
-                            <span className="font-medium text-gray-900">{stockData.Open}</span>
-                        </div>
-                        <div className="flex justify-between shadow-sm">
-                            <span className="text-gray-600">Previous Close</span>
-                            <span className="font-medium text-gray-900">{stockData.PrevClose}</span>
-                        </div>
-                        <div className="flex justify-between shadow-sm">
-                            <span className="text-gray-600">Volume</span>
-                            <span className="font-medium text-gray-900">{stockData.Volume}</span>
-                        </div>
-                        <div className="flex justify-between shadow-sm">
-                            <span className="text-gray-600">Day Range</span>
-                            <span className="font-medium text-gray-900">{stockData.DayRange}</span>
-                        </div>
-                        <div className="flex justify-between shadow-sm">
-                            <span className="text-gray-600">52 Week Range</span>
-                            <span className="font-medium text-gray-900">{stockData.WeekRange52}</span>
-                        </div>
-                    </div>
-
-                    {/* placeholder */}
-                    <div className="mt-12 space-y-4">
-                        <div className="h-[500px] bg-gray-50 rounded-lg flex items-center justify-center">
-                            <span className="text-gray-400">placeholder</span>
-                        </div>
-                    </div>
                 </div>
 
-                {/* Right Column - Buy Form and Transactions (Sticky) */}
+                {/* Right Column - Sell Form and Transactions (Sticky) */}
                 <div className="space-y-6">
-                    {/* Buy Form */}
-                    <div className="bg-purple-50 rounded-2xl p-10 space-y-6">
+                    {/* Sell Form */}
+                    {isQuantityInvalid && (
+                        <div className="bg-red-100 text-red-700 text-sm p-2 rounded-lg">
+                            ❌ Not Valid Quantity
+                        </div>
+                    )}
+                    <div className="bg-orange-50 rounded-2xl p-10 space-y-6">
                         {/* Symbol Input */}
                         <div className="flex">
                             <label className="block text-md text-gray-700 mt-2">Symbol</label>
@@ -150,7 +190,7 @@ const Buys = () => {
                             <label className="block text-md text-gray-700 mt-2">Quantity</label>
                             <input
                                 type="number"
-                                className="text-center ml-[51px] w-full px-3 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                className="text-center ml-[51px] w-full px-3 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                 value={quantity}
                                 onChange={(e) => {
                                     const value = e.target.value;
@@ -180,8 +220,8 @@ const Buys = () => {
 
                         {/* Action Buttons */}
                         <div className="flex space-x-5 pt-4">
-                            <button className="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-medium py-3 px-6 rounded-lg transition-colors">
-                                Buy
+                            <button className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-6 rounded-lg transition-colors">
+                                Sell
                             </button>
                             <button className="flex-1 border border-gray-300 bg-white hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 rounded-lg transition-colors">
                                 Cancel
@@ -189,42 +229,42 @@ const Buys = () => {
                         </div>
                     </div>
 
-                    {/* Buy Transactions Log */}
+                    {/* Sell Transactions Log */}
                     <div className="bg-gray-100 rounded-lg overflow-hidden shadow-sm">
-                        <h3 className="text-gray-600 pt-6 pb-2 pl-6 mb-1 font-medium text-left">Buy Transactions Log</h3>
+                        <h3 className="text-gray-600 pt-6 pb-2 pl-6 mb-1 font-medium text-left">Sell Transactions Log</h3>
                         <div className="max-h-96 overflow-y-auto">
                             <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left border-b border-gray-100">
-                                Bought 5 AAPL @ $188.98
+                                Sold 5 AAPL @ $188.98
                                 <br></br>
                                 Total: $944.90
                                 <span className="text-sm text-gray-500 block text-right">7/10/2025</span>
                             </div>
                             <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left border-b border-gray-100">
-                                Bought 1 AAPL @ $188.98
+                                Sold 1 AAPL @ $188.98
                                 <br></br>
                                 Total: $188.98
                                 <span className="text-sm text-gray-500 block text-right">7/9/2025</span>
                             </div>
                             <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left border-b border-gray-100">
-                                Bought 1 AAPL @ $188.98
+                                Sold 1 AAPL @ $188.98
                                 <br></br>
                                 Total: $188.98
                                 <span className="text-sm text-gray-500 block text-right">7/9/2025</span>
                             </div>
                             <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left border-b border-gray-100">
-                                Bought 1 AAPL @ $188.98
+                                Sold 1 AAPL @ $188.98
                                 <br></br>
                                 Total: $188.98
                                 <span className="text-sm text-gray-500 block text-right">7/9/2025</span>
                             </div>
                             <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left border-b border-gray-100">
-                                Bought 1 AAPL @ $188.98
+                                Sold 1 AAPL @ $188.98
                                 <br></br>
                                 Total: $188.98
                                 <span className="text-sm text-gray-500 block text-right">7/9/2025</span>
                             </div>
                             <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left">
-                                Bought 1 AAPL @ $188.98
+                                Sold 1 AAPL @ $188.98
                                 <br></br>
                                 Total: $188.98
                                 <span className="text-sm text-gray-500 block text-right">7/9/2025</span>
@@ -237,4 +277,4 @@ const Buys = () => {
     );
 };
 
-export { Buys };
+export { Sells };
