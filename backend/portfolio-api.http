@@ -84,29 +84,20 @@ Content-Type: application/json
 ### 11. Test error case - GET non-existent item
 GET http://localhost:8080/api/portfolio/999 
 
-
-### 12. Create dummy data from June 2024 to current month (July 2025)
-POST http://localhost:8080/api/monthly-summaries/create-june-2024-to-current
-
 ###
 
-### 13. Create dummy daily data for the last 30 days
-POST http://localhost:8080/api/daily-values/create-dummy-daily
-
-###
-
-### 14. Trigger daily snapshot
+### 12. Trigger daily snapshot
 POST http://localhost:8080/api/daily-values/save-snapshot
 
 ###
 
-### 15. Cash operations
+### 13. Cash operations
 ### GET cash balance
 GET http://localhost:8080/api/cash
 
 ###
 
-### 16. Add cash to account
+### 14. Add cash to account
 POST http://localhost:8080/api/cash/add
 Content-Type: application/json
 
@@ -116,7 +107,7 @@ Content-Type: application/json
 
 ###
 
-### 17. Initialize cash account
+### 15. Initialize cash account
 POST http://localhost:8080/api/cash/initialize
 Content-Type: application/json
 
@@ -126,7 +117,7 @@ Content-Type: application/json
 
 ###
 
-### 18. Stock data operations
+### 16. Stock data operations
 ### Get stock data for symbols
 POST http://localhost:8080/api/stock-data
 Content-Type: application/json
@@ -137,44 +128,44 @@ Content-Type: application/json
 
 ###
 
-### 16. GET all monthly summaries
+### 17. GET all monthly summaries
 GET http://localhost:8080/api/monthly-summaries
 
 ###
 
-### 17. Create monthly summary for current month
+### 18. Create monthly summary for current month
 POST http://localhost:8080/api/monthly-summaries/current-month
 
 ###
 
-### 20. GET monthly summaries for specific year (2024)
+### 19. GET monthly summaries for specific year (2024)
 GET http://localhost:8080/api/monthly-summaries/year/2024
 
 ###
 
-### 21. GET specific monthly summary (2024, November)
+### 20. GET specific monthly summary (2024, November)
 GET http://localhost:8080/api/monthly-summaries/2024/11
 
 ###
 
-### 22. Create or update monthly summary manually
+### 21. Create or update monthly summary manually
 POST http://localhost:8080/api/monthly-summaries/2024/1?totalValue=50000.00&previousMonthValue=48000.00
 
 ###
 
 
 ### Clean up services below: 
-### 23. Clean up old monthly summaries
+### 22. Clean up old monthly summaries
 DELETE http://localhost:8080/api/monthly-summaries/cleanup
 
 ###
 
-### 24. Delete all monthly summaries
+### 23. Delete all monthly summaries
 DELETE http://localhost:8080/api/monthly-summaries/delete-all-monthly
 
 ###
 
-### 25. Delete all daily records (records with month > 12)
+### 24. Delete all daily records (records with month > 12)
 DELETE http://localhost:8080/api/monthly-summaries/delete-all-daily
 
 ###

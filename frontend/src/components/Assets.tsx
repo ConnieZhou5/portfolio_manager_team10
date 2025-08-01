@@ -53,7 +53,7 @@ const Asset = () => {
                 setAssets(assetData);
                 setTotalValue(totalAssetsValue);
             } catch (err) {
-                setError('Failed to load asset data');
+                setError('Failed to load asset data. Check if backend is running.');
                 console.error('Error fetching asset data:', err);
             } finally {
                 setLoading(false);

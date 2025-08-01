@@ -8,7 +8,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.Optional;
 
@@ -117,80 +116,5 @@ public class PortfolioDailyValueService {
         } catch (Exception e) {
             System.err.println("❌ Error during cleanup: " + e.getMessage());
         }
-    }
-
-    /**
-     * Create dummy daily data for the last 30 days
-     * 
-     * @return Number of daily records created
-     */
-    public int createDummyDailyData() {
-        LocalDate now = LocalDate.now();
-        BigDecimal startingTotalValue = new BigDecimal("52000.00");
-        BigDecimal startingInvestmentsValue = new BigDecimal("45000.00");
-        BigDecimal startingCashValue = new BigDecimal("7000.00");
-        
-        BigDecimal currentTotalValue = startingTotalValue;
-        BigDecimal currentInvestmentsValue = startingInvestmentsValue;
-        BigDecimal currentCashValue = startingCashValue;
-        
-        int createdCount = 0;
-        
-        // Create data for the last 30 days
-        for (int i = 29; i >= 0; i--) {
-            LocalDate targetDate = now.minusDays(i);
-            
-            // Skip if we already have data for this date
-            if (portfolioDailyValueRepository.existsBySnapshotDate(targetDate)) {
-                continue;
-            }
-            
-            // Generate realistic daily changes
-            BigDecimal dailyTotalChange;
-            BigDecimal dailyInvestmentsChange;
-            BigDecimal dailyCashChange;
-            
-            if (i == 29) {
-                // First day (30 days ago) - no previous data
-                dailyTotalChange = BigDecimal.ZERO;
-                dailyInvestmentsChange = BigDecimal.ZERO;
-                dailyCashChange = BigDecimal.ZERO;
-            } else {
-                // Generate realistic daily gains/losses
-                // Random daily change between -3% and +4% for investments
-                double randomPercent = (Math.random() * 7) - 3; // -3 to +4
-                BigDecimal dailyChangePercent = new BigDecimal(String.valueOf(randomPercent));
-                dailyInvestmentsChange = currentInvestmentsValue.multiply(dailyChangePercent)
-                        .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
-                
-                // Cash changes are smaller and more stable
-                double cashRandomPercent = (Math.random() * 2) - 1; // -1 to +1
-                BigDecimal cashChangePercent = new BigDecimal(String.valueOf(cashRandomPercent));
-                dailyCashChange = currentCashValue.multiply(cashChangePercent)
-                        .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
-                
-                dailyTotalChange = dailyInvestmentsChange.add(dailyCashChange);
-            }
-            
-            // Calculate new values
-            BigDecimal newTotalValue = currentTotalValue.add(dailyTotalChange);
-            BigDecimal newInvestmentsValue = currentInvestmentsValue.add(dailyInvestmentsChange);
-            BigDecimal newCashValue = currentCashValue.add(dailyCashChange);
-            
-            // Create the daily value
-            PortfolioDailyValue dailyValue = new PortfolioDailyValue(
-                    targetDate, newTotalValue, newInvestmentsValue, newCashValue
-            );
-            
-            portfolioDailyValueRepository.save(dailyValue);
-            createdCount++;
-            
-            // Update current values for next iteration
-            currentTotalValue = newTotalValue;
-            currentInvestmentsValue = newInvestmentsValue;
-            currentCashValue = newCashValue;
-        }
-        
-        return createdCount;
     }
 } 
