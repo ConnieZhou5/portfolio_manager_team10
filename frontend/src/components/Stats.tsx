@@ -81,7 +81,7 @@ const PortfolioStatsCards = () => {
 
     if (loading) {
         return (
-            <div className="p-6 bg-gray-50">
+            <div className="p-6">
                 <div className="max-w-6xl mx-auto">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                         {[...Array(4)].map((_, index) => (
@@ -98,7 +98,7 @@ const PortfolioStatsCards = () => {
 
     if (error) {
         return (
-            <div className="p-6 bg-gray-50">
+            <div className="p-6">
                 <div className="max-w-6xl mx-auto">
                     <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                         <p className="text-red-800">{error}</p>
@@ -113,7 +113,7 @@ const PortfolioStatsCards = () => {
     }
 
     return (
-        <div className="p-6 bg-gray-50">
+        <div className="p-6">
             <div className="max-w-6xl mx-auto">
 
                 {/* Stats Cards Grid */}

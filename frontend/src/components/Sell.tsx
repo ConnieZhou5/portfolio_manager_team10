@@ -5,30 +5,26 @@ import { Link } from 'react-router-dom';
 type Market = 'Market Open' | 'Market Closed'
 
 const stockData = {
-    Symbol: 'AMD',
-    Name: 'ADVANCED MICRO DEVICES INC COM',
-    Price: '$173.66', //reg market price
-    DayGain: '+7.19 (+4.32%)', //reg market price - chart prev close
-    Open: '$208.27', //open
-    PrevClose: '$209.05', // chartPreviousClose
-    Volume: '39,000,000', // regularMarketVolume
-    DayRange: '$207.00 - $209.10', // regularMarketDayLow, regularMarketDayHigh
-    WeekRange52: '$76.48 - $209.10', // fiftyTwoWeekLow, fiftyTwoWeekHigh
     MarketStatus: 'Market Open' //need to calculate with time
 };
 
+// List of data for the table (you can modify this to pull data from an API or elsewhere)
+const tableData = [
+    { symbol: 'AMD', lastPrice: 12.00, changeDollar: 12.00, changePercent: 12.00, qty: 12, pricePaid: 12.00, dayGain: 12.00, totalGain: 12.00, totalGainPercent: 12.00, value: 12.00, date: '07/09/2025' },
+    { symbol: 'AMZ', lastPrice: 34.00, changeDollar: 34.00, changePercent: 34.00, qty: 1, pricePaid: 34.00, dayGain: 34.00, totalGain: 34.00, totalGainPercent: 34.00, value: 34.00, date: '06/08/2025' },
+    { symbol: 'ARKK', lastPrice: 44.00, changeDollar: 44.00, changePercent: 44.00, qty: 6, pricePaid: 44.00, dayGain: 44.00, totalGain: 44.00, totalGainPercent: 44.00, value: 44.00, date: '06/08/2025' }
+];
+
 const Sells = () => {
-    const [symbol, setSymbol] = useState(stockData.Symbol);
+    const [symbol, setSymbol] = useState('');
     const [quantity, setQuantity] = useState('');
     const [orderType, setOrderType] = useState('Market');
     // const [quantity, setQuantity] = useState();
     const isQuantityInvalid = parseFloat(quantity) <= 0 || isNaN(parseFloat(quantity));
+    const [invalidqty, setQtyError] = useState(false);
+    const [invalidstock, setStockError] = useState(false);
 
-    const calculateTotal = () => {
-        const price = parseFloat(stockData.Price.replace('$', ''));
-        const qty = parseFloat(quantity) || 0;
-        return (price * qty).toFixed(2);
-    };
+
 
     const getMarketStatusStyles = () => {
         if (stockData.MarketStatus === 'Market Open') {
@@ -46,6 +42,13 @@ const Sells = () => {
         }
     };
 
+    const calculateTotal = () => {
+        const stock = tableData.find(item => item.symbol === symbol);
+        const price = stock ? stock.lastPrice : 0;
+        const qty = parseFloat(quantity) || 0;
+        return (price * qty).toFixed(2);
+    };
+
 
     const [expandedRows, setExpandedRows] = useState<{ [key: string]: boolean }>({});
     const [searchQuery, setSearchQuery] = useState<string>(''); // State for search query
@@ -54,12 +57,7 @@ const Sells = () => {
         setExpandedRows(prev => ({ ...prev, [symbol]: !prev[symbol] }));
     };
 
-    // List of data for the table (you can modify this to pull data from an API or elsewhere)
-    const tableData = [
-        { symbol: 'AMD', lastPrice: 12.00, changeDollar: 12.00, changePercent: 12.00, qty: 12, pricePaid: 12.00, dayGain: 12.00, totalGain: 12.00, totalGainPercent: 12.00, value: 12.00, date: '07/09/2025' },
-        { symbol: 'AMZ', lastPrice: 34.00, changeDollar: 34.00, changePercent: 34.00, qty: 1, pricePaid: 34.00, dayGain: 34.00, totalGain: 34.00, totalGainPercent: 34.00, value: 34.00, date: '06/08/2025' },
-        { symbol: 'ARKK', lastPrice: 44.00, changeDollar: 44.00, changePercent: 44.00, qty: 6, pricePaid: 44.00, dayGain: 44.00, totalGain: 44.00, totalGainPercent: 44.00, value: 44.00, date: '06/08/2025' }
-    ];
+
 
 
     // Filter data based on the search query
@@ -102,10 +100,17 @@ const Sells = () => {
                         />
                     </div>
 
+                    <div className={`ml-[587px] mb-2 flex items-center space-x-2 px-3 py-1.5 rounded-full border ${getMarketStatusStyles().containerClass}`}>
+                        <div className={`w-2 h-2 rounded-full ${getMarketStatusStyles().dotClass}`}></div>
+                        <span className={`text-sm font-medium ${getMarketStatusStyles().textClass}`}>
+                            {stockData.MarketStatus}
+                        </span>
+                    </div>
+
                     {/* Table Section */}
                     <div className="col-span-2 bg-white rounded-2xl p-6 shadow-md text-xs">
                         <table className="w-full text-xs text-left">
-                            <thead className="text-gray-500 border-b align-center h-8">
+                            <thead className="text-gray-700 border-b align-center h-8">
                                 <tr>
                                     <th>Symbol</th>
                                     <th>Last Price $</th>
@@ -125,7 +130,7 @@ const Sells = () => {
                                     <React.Fragment key={row.symbol}>
                                         <tr className="border-b cursor-pointer text-center align-center h-8" onClick={() => toggleRow(row.symbol)}>
                                             <td>
-                                                <span className="text-black-600 hover:underline">{expandedRows[row.symbol] ? '▼' : '▶'} {row.symbol}</span>
+                                                <span className="text-black-200 hover:underline">{expandedRows[row.symbol] ? '▼' : '▶'} {row.symbol}</span>
                                             </td>
                                             <td>{row.lastPrice.toFixed(2)}</td>
                                             <td>{row.changeDollar.toFixed(2)}</td>
@@ -138,7 +143,7 @@ const Sells = () => {
                                             <td>{row.value.toFixed(2)}</td>
                                         </tr>
                                         {expandedRows[row.symbol] && (
-                                            <tr className="bg-gray-100 text-gray-700 text-center align-center h-8">
+                                            <tr className="bg-gray-100 text-gray-500 text-center align-center h-8">
                                                 <td>{row.date}</td>
                                                 <td>{row.lastPrice.toFixed(2)}</td>
                                                 <td>{row.changeDollar.toFixed(2)}</td>
@@ -154,13 +159,13 @@ const Sells = () => {
                                     </React.Fragment>
                                 ))}
                                 {/* Total Row... */}
-                                <tr className="font-semibold border-t align-center h-8">
-                                    <td colSpan={5} className="text-right pr-2">Total</td>
-                                    <td>2,241.84</td>
-                                    <td>12.88</td>
-                                    <td>232.44</td>
-                                    <td>10.37</td>
-                                    <td>2,474.33</td>
+                                <tr className="font-semibold border-t h-8">
+                                    <td colSpan={5} className="text-left pl-4">Total</td>
+                                    <td className="text-center align-center">2,241.84</td>
+                                    <td className="text-center align-center">12.88</td>
+                                    <td className="text-center align-center">232.44</td>
+                                    <td className="text-center align-center">10.37</td>
+                                    <td className="text-center align-center">2,474.33</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -171,18 +176,42 @@ const Sells = () => {
                 {/* Right Column - Sell Form and Transactions (Sticky) */}
                 <div className="space-y-6">
                     {/* Sell Form */}
-                    {isQuantityInvalid && (
-                        <div className="bg-red-100 text-red-700 text-sm p-2 rounded-lg">
-                            ❌ Not Valid Quantity
-                        </div>
-                    )}
+
                     <div className="bg-orange-50 rounded-2xl p-10 space-y-6">
+
+                        {invalidqty && (
+                            <div className="bg-red-100 text-red-700 text-sm p-2 rounded-lg">
+                                ❌ Not Valid Quantity
+                            </div>
+                        )}
+
+                        {invalidstock && (
+                            <div className="bg-red-100 text-red-700 text-sm p-2 rounded-lg">
+                                ❌ Not Valid Stock
+                            </div>
+                        )}
+
                         {/* Symbol Input */}
                         <div className="flex">
                             <label className="block text-md text-gray-700 mt-2">Symbol</label>
-                            <div className="ml-[59px] w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-medium">
-                                {stockData.Symbol}
-                            </div>
+                            <input
+                                type="text"
+                                className="text-center ml-[59px] w-full px-3 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                value={symbol}
+
+
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    const stock = tableData.find(item => item.symbol === symbol);
+
+                                    const maxQty = stock ? stock.qty : 0;
+
+                                    if (maxQty >= 0) {
+                                        setSymbol(value);
+                                        setStockError(false);
+                                    }
+                                }}
+                            />
                         </div>
 
                         {/* Quantity Input */}
@@ -196,6 +225,7 @@ const Sells = () => {
                                     const value = e.target.value;
                                     if (value === '' || (Number(value) >= 0 && Number.isInteger(Number(value)))) {
                                         setQuantity(value);
+                                        setQtyError(false);
                                     }
                                 }}
                                 placeholder="0"
@@ -220,10 +250,32 @@ const Sells = () => {
 
                         {/* Action Buttons */}
                         <div className="flex space-x-5 pt-4">
-                            <button className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-6 rounded-lg transition-colors">
+                            <button
+                                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+                                onClick={() => {
+                                    const stock = tableData.find(item => item.symbol === symbol);
+                                    const maxQty = stock ? stock.qty : 0;
+
+                                    if (maxQty == 0) {
+                                        setStockError(true);
+                                    }
+                                    else if (parseFloat(quantity) > maxQty || isQuantityInvalid) {
+                                        setQtyError(true);
+                                    } else {
+                                        // Process sell order here
+                                        console.log('Sell order processed');
+                                    }
+                                }}
+                            >
                                 Sell
                             </button>
-                            <button className="flex-1 border border-gray-300 bg-white hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 rounded-lg transition-colors">
+                            <button className="flex-1 border border-gray-300 bg-white hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 rounded-lg transition-colors"
+                                onClick={() => {
+                                    setQuantity('');
+                                    setSymbol('');
+                                    setQtyError(false);
+                                    setStockError(false);
+                                }}>
                                 Cancel
                             </button>
                         </div>
