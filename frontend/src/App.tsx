@@ -5,19 +5,21 @@ import { Dashboard } from './pages/Dashboard'
 import { Positions } from './pages/Positions'
 import { Sell } from './pages/Pos_Sell'
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-
+import { PortfolioProvider } from './context/PortfolioContext';
 
 function App() {
 
   return (
     <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/Positions" element={<Positions />} />
-          <Route path="/Positions/Sell" element={<Sell />} />
-        </Routes>
-      </BrowserRouter>
+      <PortfolioProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/Positions" element={<Positions />} />
+            <Route path="/Positions/Sell" element={<Sell />} />
+          </Routes>
+        </BrowserRouter>
+      </PortfolioProvider>
     </div>
   );
 }
