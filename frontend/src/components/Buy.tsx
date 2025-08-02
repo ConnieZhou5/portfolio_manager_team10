@@ -38,6 +38,25 @@ const Buys = () => {
     const [marketOpen, setMarketOpen] = useState(true);
     const { triggerRefresh } = usePortfolio();
 
+    // Auto-dismiss success and error messages after 10 seconds
+    useEffect(() => {
+        if (buySuccess) {
+            const timer = setTimeout(() => {
+                setBuySuccess(null);
+            }, 10000);
+            return () => clearTimeout(timer);
+        }
+    }, [buySuccess]);
+
+    useEffect(() => {
+        if (buyError) {
+            const timer = setTimeout(() => {
+                setBuyError(null);
+            }, 10000);
+            return () => clearTimeout(timer);
+        }
+    }, [buyError]);
+
     // Check market status every minute
     useEffect(() => {
         const checkMarketStatus = () => {

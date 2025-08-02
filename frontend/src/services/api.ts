@@ -51,11 +51,28 @@ export interface BuyRequest {
   tradeDate?: string;
 }
 
+export interface SellRequest {
+  ticker: string;
+  quantity: number;
+  price: number;
+  tradeDate?: string;
+}
+
 export interface BuyResponse {
   success: boolean;
   message?: string;
   error?: string;
   totalCost?: number;
+  remainingCash?: number;
+  portfolioItem?: any;
+  tradeRecord?: any;
+}
+
+export interface SellResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+  totalProceeds?: number;
   remainingCash?: number;
   portfolioItem?: any;
   tradeRecord?: any;
@@ -117,6 +134,13 @@ class ApiService {
     return this.request<BuyResponse>(`http://localhost:8080/api/buy`, {
       method: 'POST',
       body: JSON.stringify(buyRequest),
+    });
+  }
+
+  async executeSell(sellRequest: SellRequest): Promise<SellResponse> {
+    return this.request<SellResponse>(`http://localhost:8080/api/sell`, {
+      method: 'POST',
+      body: JSON.stringify(sellRequest),
     });
   }
 
