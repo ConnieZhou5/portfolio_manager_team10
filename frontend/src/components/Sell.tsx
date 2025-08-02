@@ -1,53 +1,182 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PivotTable from './PivotTable';
-import { apiService, TradeHistory } from '../services/api';
+import { apiService, TradeHistory, PortfolioItem, SellRequest, SellResponse } from '../services/api';
+import { usePortfolio } from '../context/PortfolioContext';
+import { isMarketOpen } from '../utils/marketStatus';
 
 type Market = 'Market Open' | 'Market Closed'
 
-const stockData = {
-    MarketStatus: 'Market Open' //need to calculate with time
-};
-
-// List of data for the table (you can modify this to pull data from an API or elsewhere)
-const portfolioData = [
-    { symbol: 'AAPL', lastPrice: 190.5, change: -1.2, changePercent: -0.63, quantity: 10, pricePaid: 185, daysGain: -12, totalGain: 55, totalGainPercent: 30, value: 1905, date: '08/01/25' },
-    { symbol: 'AAPL', lastPrice: 191.0, change: -0.5, changePercent: -0.26, quantity: 20, pricePaid: 180, daysGain: -10, totalGain: 75, totalGainPercent: 41.6, value: 3820, date: '07/14/25' },
-    { symbol: 'GOOG', lastPrice: 130.0, change: 2.0, changePercent: 1.56, quantity: 5, pricePaid: 125, daysGain: 10, totalGain: 25, totalGainPercent: 20, value: 650, date: '07/31/25' }
-];
+interface PortfolioDataItem {
+    symbol: string;
+    lastPrice: number;
+    change: number;
+    changePercent: number;
+    quantity: number;
+    pricePaid: number;
+    daysGain: number;
+    totalGain: number;
+    totalGainPercent: number;
+    value: number;
+    date: string;
+}
 
 const Sells = () => {
     const [symbol, setSymbol] = useState('');
     const [quantity, setQuantity] = useState('');
     const [orderType, setOrderType] = useState('Market');
-    // const [quantity, setQuantity] = useState();
     const isQuantityInvalid = parseFloat(quantity) <= 0 || isNaN(parseFloat(quantity));
     const [invalidqty, setQtyError] = useState(false);
     const [invalidstock, setStockError] = useState(false);
     const [sellTrades, setSellTrades] = useState<TradeHistory[]>([]);
+    const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
+    const [portfolioData, setPortfolioData] = useState<PortfolioDataItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [marketOpen, setMarketOpen] = useState(true);
+    const [sellLoading, setSellLoading] = useState(false);
+    const [sellError, setSellError] = useState<string | null>(null);
+    const [sellSuccess, setSellSuccess] = useState<string | null>(null);
+    const { refreshTrigger, triggerRefresh } = usePortfolio();
+
+    // Auto-dismiss success and error messages after 10 seconds
+    useEffect(() => {
+        if (sellSuccess) {
+            const timer = setTimeout(() => {
+                setSellSuccess(null);
+            }, 10000);
+            return () => clearTimeout(timer);
+        }
+    }, [sellSuccess]);
 
     useEffect(() => {
-        const fetchSellTrades = async () => {
+        if (sellError) {
+            const timer = setTimeout(() => {
+                setSellError(null);
+            }, 10000);
+            return () => clearTimeout(timer);
+        }
+    }, [sellError]);
+
+    // Auto-dismiss validation error messages after 10 seconds
+    useEffect(() => {
+        if (invalidqty) {
+            const timer = setTimeout(() => {
+                setQtyError(false);
+            }, 10000);
+            return () => clearTimeout(timer);
+        }
+    }, [invalidqty]);
+
+    useEffect(() => {
+        if (invalidstock) {
+            const timer = setTimeout(() => {
+                setStockError(false);
+            }, 10000);
+            return () => clearTimeout(timer);
+        }
+    }, [invalidstock]);
+
+    // Check market status every minute
+    useEffect(() => {
+        const checkMarketStatus = () => {
+            setMarketOpen(isMarketOpen());
+        };
+
+        // Check immediately
+        checkMarketStatus();
+
+        // Check every minute
+        const interval = setInterval(checkMarketStatus, 60000);
+
+        return () => clearInterval(interval);
+    }, []);
+
+    useEffect(() => {
+        const fetchData = async () => {
             try {
                 setLoading(true);
                 setError(null);
-                const trades = await apiService.getTradesByType('SELL');
+                
+                // Fetch both sell trades and portfolio items
+                const [trades, portfolio] = await Promise.all([
+                    apiService.getTradesByType('SELL'),
+                    apiService.getAllPortfolioItems()
+                ]);
+                
                 setSellTrades(trades);
+                setPortfolioItems(portfolio);
+                
+                // Convert portfolio items to display format
+                const convertedData = await convertPortfolioToDisplayData(portfolio);
+                setPortfolioData(convertedData);
+                
             } catch (err) {
-                setError('Failed to load sell transactions');
-                console.error('Error fetching sell trades:', err);
+                setError('Failed to load data');
+                console.error('Error fetching data:', err);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchSellTrades();
-    }, []);
+        fetchData();
+    }, [refreshTrigger]); // Add refreshTrigger as dependency
+
+    // Convert portfolio items to display format with current stock prices
+    const convertPortfolioToDisplayData = async (portfolio: PortfolioItem[]): Promise<PortfolioDataItem[]> => {
+        if (portfolio.length === 0) return [];
+
+        try {
+            // Get current stock prices for all portfolio items
+            const symbols = portfolio.map(item => item.ticker);
+            const stockData = await apiService.getStockData(symbols);
+            
+            return portfolio.map(item => {
+                const currentStock = stockData.find(stock => stock.symbol === item.ticker);
+                const currentPrice = currentStock?.price || item.buyPrice;
+                const previousClose = currentStock?.previousClose || item.buyPrice;
+                
+                const priceChange = currentPrice - previousClose;
+                const priceChangePercent = previousClose > 0 ? (priceChange / previousClose) * 100 : 0;
+                const totalGain = (currentPrice - item.buyPrice) * item.quantity;
+                const totalGainPercent = item.buyPrice > 0 ? ((currentPrice - item.buyPrice) / item.buyPrice) * 100 : 0;
+                const currentValue = currentPrice * item.quantity;
+                
+                return {
+                    symbol: item.ticker,
+                    lastPrice: currentPrice,
+                    change: priceChange,
+                    changePercent: priceChangePercent,
+                    quantity: item.quantity,
+                    pricePaid: item.buyPrice,
+                    daysGain: priceChange * item.quantity,
+                    totalGain: totalGain,
+                    totalGainPercent: totalGainPercent,
+                    value: currentValue,
+                    date: item.buyDate
+                };
+            });
+        } catch (err) {
+            console.error('Error fetching stock data:', err);
+            // Return portfolio data without current prices if stock data fetch fails
+            return portfolio.map(item => ({
+                symbol: item.ticker,
+                lastPrice: item.buyPrice,
+                change: 0,
+                changePercent: 0,
+                quantity: item.quantity,
+                pricePaid: item.buyPrice,
+                daysGain: 0,
+                totalGain: 0,
+                totalGainPercent: 0,
+                value: item.totalValue,
+                date: item.buyDate
+            }));
+        }
+    };
 
     const getMarketStatusStyles = () => {
-        if (stockData.MarketStatus === 'Market Open') {
+        if (marketOpen) {
             return {
                 containerClass: 'bg-green-50 border-green-200',
                 dotClass: 'bg-green-500 animate-pulse',
@@ -88,6 +217,75 @@ const Sells = () => {
     // Filter data based on the search query
     const filteredData = portfolioData.filter(row => row.symbol.toLowerCase().includes(searchQuery.toLowerCase()));
 
+    const handleSellTransaction = async () => {
+        if (!symbol || !quantity || parseFloat(quantity) <= 0) {
+            setSellError('Please select a stock and enter a valid quantity');
+            return;
+        }
+
+        if (!marketOpen) {
+            setSellError('Market is closed. Cannot sell at this time.');
+            return;
+        }
+
+        // Find the stock in portfolio data
+        const stock = portfolioData.find(item => item.symbol === symbol);
+        if (!stock) {
+            setSellError('Stock not found in your portfolio');
+            return;
+        }
+
+        const qty = parseInt(quantity);
+        if (qty > stock.quantity) {
+            setSellError(`Insufficient shares. Available: ${stock.quantity}, Requested: ${qty}`);
+            return;
+        }
+
+        try {
+            setSellLoading(true);
+            setSellError(null);
+            setSellSuccess(null);
+
+            const sellRequest: SellRequest = {
+                ticker: symbol,
+                quantity: qty,
+                price: stock.lastPrice,
+                tradeDate: new Date().toISOString().split('T')[0] // Today's date in YYYY-MM-DD format
+            };
+
+            const response = await apiService.executeSell(sellRequest);
+
+            if (response.success) {
+                setSellSuccess(`Successfully sold ${qty} shares of ${symbol} for $${response.totalProceeds?.toFixed(2)}`);
+                setQuantity('');
+                setSymbol('');
+                
+                // Refresh portfolio data and trades
+                const [updatedTrades, updatedPortfolio] = await Promise.all([
+                    apiService.getTradesByType('SELL'),
+                    apiService.getAllPortfolioItems()
+                ]);
+                
+                setSellTrades(updatedTrades);
+                setPortfolioItems(updatedPortfolio);
+                
+                // Convert updated portfolio to display format
+                const convertedData = await convertPortfolioToDisplayData(updatedPortfolio);
+                setPortfolioData(convertedData);
+                
+                // Trigger portfolio refresh to update Stats and Assets components
+                triggerRefresh();
+            } else {
+                setSellError(response.error || 'Sell transaction failed');
+            }
+        } catch (err) {
+            setSellError('Failed to execute sell transaction');
+            console.error('Error executing sell transaction:', err);
+        } finally {
+            setSellLoading(false);
+        }
+    };
+
     return (
         <div className="bg-white rounded-2xl p-8 max-w-6xl mx-auto shadow-lg">
             {/* Header Tabs */}
@@ -124,17 +322,31 @@ const Sells = () => {
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
-
+{/* 
                     <div className={`ml-[587px] mb-2 flex items-center space-x-2 px-3 py-1.5 rounded-full border ${getMarketStatusStyles().containerClass}`}>
                         <div className={`w-2 h-2 rounded-full ${getMarketStatusStyles().dotClass}`}></div>
                         <span className={`text-sm font-medium ${getMarketStatusStyles().textClass}`}>
-                            {stockData.MarketStatus}
+                            {marketOpen ? 'Market Open' : 'Market Closed'}
                         </span>
-                    </div>
+                    </div> */}
 
                     {/* Table Section */}
                     <div className="col-span-2 bg-white rounded-2xl p-6 shadow-md text-xs">
-                        <PivotTable data={portfolioData} searchText={searchQuery} />
+                        {loading ? (
+                            <div className="flex items-center justify-center h-32">
+                                <div className="text-gray-500">Loading portfolio data...</div>
+                            </div>
+                        ) : error ? (
+                            <div className="flex items-center justify-center h-32">
+                                <div className="text-red-500">{error}</div>
+                            </div>
+                        ) : portfolioData.length === 0 ? (
+                            <div className="flex items-center justify-center h-32">
+                                <div className="text-gray-500">No portfolio holdings found</div>
+                            </div>
+                        ) : (
+                            <PivotTable data={portfolioData} searchText={searchQuery} />
+                        )}
                     </div>
 
                 </div>
@@ -144,6 +356,19 @@ const Sells = () => {
                     {/* Sell Form */}
 
                     <div className="bg-orange-50 rounded-2xl p-10 space-y-6">
+
+                        {/* Error/Success Messages */}
+                        {sellError && (
+                            <div className="bg-red-100 text-red-700 text-sm p-2 rounded-lg">
+                                ❌ {sellError}
+                            </div>
+                        )}
+
+                        {sellSuccess && (
+                            <div className="bg-green-100 text-green-700 text-sm p-2 rounded-lg">
+                                ✅ {sellSuccess}
+                            </div>
+                        )}
 
                         {invalidqty && (
                             <div className="bg-red-100 text-red-700 text-sm p-2 rounded-lg">
@@ -157,6 +382,13 @@ const Sells = () => {
                             </div>
                         )}
 
+                        {/* Market Status Indicator */}
+                        {!marketOpen && (
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-2 text-center">
+                                <span className="text-red-700 text-sm font-medium">Market Closed - Cannot Sell</span>
+                            </div>
+                        )}
+
                         {/* Symbol Input */}
                         <div className="flex">
                             <label className="block text-md text-gray-700 mt-2">Symbol</label>
@@ -164,17 +396,16 @@ const Sells = () => {
                                 type="text"
                                 className="text-center ml-[59px] w-full px-3 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                 value={symbol}
-
-
                                 onChange={(e) => {
                                     const value = e.target.value;
-                                    const stock = portfolioData.find(item => item.symbol === symbol);
+                                    const stock = portfolioData.find(item => item.symbol === value);
 
-                                    const maxQty = stock ? stock.quantity : 0;
-
-                                    if (maxQty >= 0) {
+                                    if (stock && stock.quantity > 0) {
                                         setSymbol(value);
                                         setStockError(false);
+                                    } else {
+                                        setSymbol(value);
+                                        setStockError(true);
                                     }
                                 }}
                             />
@@ -217,23 +448,15 @@ const Sells = () => {
                         {/* Action Buttons */}
                         <div className="flex space-x-5 pt-4">
                             <button
-                                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-6 rounded-lg transition-colors"
-                                onClick={() => {
-                                    const stock = portfolioData.find(item => item.symbol === symbol);
-                                    const maxQty = stock ? stock.quantity : 0;
-
-                                    if (maxQty == 0) {
-                                        setStockError(true);
-                                    }
-                                    else if (parseFloat(quantity) > maxQty || isQuantityInvalid) {
-                                        setQtyError(true);
-                                    } else {
-                                        // Process sell order here
-                                        console.log('Sell order processed');
-                                    }
-                                }}
+                                className={`flex-1 font-medium py-3 px-6 rounded-lg transition-colors ${
+                                    !symbol || parseFloat(quantity) <= 0 || !marketOpen || sellLoading
+                                        ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                                        : 'bg-orange-500 hover:bg-orange-600 text-white'
+                                } ${!marketOpen ? 'hover:cursor-not-allowed' : ''}`}
+                                disabled={!symbol || parseFloat(quantity) <= 0 || !marketOpen || sellLoading}
+                                onClick={handleSellTransaction}
                             >
-                                Sell
+                                {sellLoading ? 'Processing...' : 'Sell'}
                             </button>
                             <button className="flex-1 border border-gray-300 bg-white hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 rounded-lg transition-colors"
                                 onClick={() => {
@@ -241,6 +464,8 @@ const Sells = () => {
                                     setSymbol('');
                                     setQtyError(false);
                                     setStockError(false);
+                                    setSellError(null);
+                                    setSellSuccess(null);
                                 }}>
                                 Cancel
                             </button>
