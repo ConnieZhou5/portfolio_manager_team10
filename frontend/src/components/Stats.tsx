@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiService, PortfolioStats } from '../services/api';
+import { usePortfolio } from '../context/PortfolioContext';
 
 type ChangeType = 'positive' | 'negative' | 'neutral'
 
@@ -60,6 +61,7 @@ const PortfolioStatsCards = () => {
     const [stats, setStats] = useState<PortfolioStats | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const { refreshTrigger } = usePortfolio();
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -77,7 +79,7 @@ const PortfolioStatsCards = () => {
         };
 
         fetchStats();
-    }, []);
+    }, [refreshTrigger]); // Add refreshTrigger as dependency
 
     if (loading) {
         return (

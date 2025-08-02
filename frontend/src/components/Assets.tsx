@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiService, PortfolioStats, CashBalance } from '../services/api';
+import { usePortfolio } from '../context/PortfolioContext';
 
 interface Asset {
     name: string;
@@ -13,6 +14,7 @@ const Asset = () => {
     const [totalValue, setTotalValue] = useState<number>(0);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+    const { refreshTrigger } = usePortfolio();
 
     useEffect(() => {
         const fetchAssetData = async () => {
@@ -61,7 +63,7 @@ const Asset = () => {
         };
 
         fetchAssetData();
-    }, []);
+    }, [refreshTrigger]); // Add refreshTrigger as dependency
 
     // Calculate stroke-dasharray for donut chart
     const radius = 100;

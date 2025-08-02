@@ -44,6 +44,23 @@ export interface StockData {
   error?: string;
 }
 
+export interface BuyRequest {
+  ticker: string;
+  quantity: number;
+  price: number;
+  tradeDate?: string;
+}
+
+export interface BuyResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+  totalCost?: number;
+  remainingCash?: number;
+  portfolioItem?: any;
+  tradeRecord?: any;
+}
+
 export interface PortfolioItem {
   id: number;
   ticker: string;
@@ -93,6 +110,13 @@ class ApiService {
     return this.request<StockData[]>(`${STOCK_DATA_API_BASE_URL}`, {
       method: 'POST',
       body: JSON.stringify({ symbols }),
+    });
+  }
+
+  async executeBuy(buyRequest: BuyRequest): Promise<BuyResponse> {
+    return this.request<BuyResponse>(`http://localhost:8080/api/buy`, {
+      method: 'POST',
+      body: JSON.stringify(buyRequest),
     });
   }
 

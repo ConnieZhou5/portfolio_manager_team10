@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { apiService, TradeHistory, StockData } from '../services/api';
+import { apiService, TradeHistory, StockData, BuyRequest, CashBalance } from '../services/api';
+import { usePortfolio } from '../context/PortfolioContext';
+import { isMarketOpen } from '../utils/marketStatus';
 
 type Market = 'Market Open' | 'Market Closed'
 
@@ -21,7 +23,7 @@ const Buys = () => {
     const [symbol, setSymbol] = useState('');
     const [quantity, setQuantity] = useState('');
     const [orderType, setOrderType] = useState('Market');
-    const [cashOnHand, setCashOnHand] = useState(500); // Default cash value
+    const [cashBalance, setCashBalance] = useState<CashBalance | null>(null);
     const [invalidqty, setInvalidqty] = useState(false);
     const [buyTrades, setBuyTrades] = useState<TradeHistory[]>([]);
     const [loading, setLoading] = useState(true);
@@ -30,23 +32,50 @@ const Buys = () => {
     const [searchLoading, setSearchLoading] = useState(false);
     const [searchError, setSearchError] = useState<string | null>(null);
     const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+    const [buyLoading, setBuyLoading] = useState(false);
+    const [buyError, setBuyError] = useState<string | null>(null);
+    const [buySuccess, setBuySuccess] = useState<string | null>(null);
+    const [marketOpen, setMarketOpen] = useState(true);
+    const { triggerRefresh } = usePortfolio();
+
+    // Check market status every minute
+    useEffect(() => {
+        const checkMarketStatus = () => {
+            setMarketOpen(isMarketOpen());
+        };
+
+        // Check immediately
+        checkMarketStatus();
+
+        // Check every minute
+        const interval = setInterval(checkMarketStatus, 60000);
+
+        return () => clearInterval(interval);
+    }, []);
 
     useEffect(() => {
-        const fetchBuyTrades = async () => {
+        const fetchData = async () => {
             try {
                 setLoading(true);
                 setError(null);
-                const trades = await apiService.getTradesByType('BUY');
+                
+                // Fetch both buy trades and cash balance
+                const [trades, cash] = await Promise.all([
+                    apiService.getTradesByType('BUY'),
+                    apiService.getCashBalance()
+                ]);
+                
                 setBuyTrades(trades);
+                setCashBalance(cash);
             } catch (err) {
-                setError('Failed to load buy transactions');
-                console.error('Error fetching buy trades:', err);
+                setError('Failed to load data');
+                console.error('Error fetching data:', err);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchBuyTrades();
+        fetchData();
     }, []);
 
     const searchStock = async (ticker: string) => {
@@ -112,6 +141,7 @@ const Buys = () => {
         }
         
         if (value.trim()) {
+            // TODO: debounce the search to prevent excessive API calls
             // Set new timeout
             const timeoutId = setTimeout(() => {
                 searchStock(value);
@@ -123,6 +153,69 @@ const Buys = () => {
         }
     };
 
+    const handleBuyTransaction = async () => {
+        if (!stockInfo || !quantity || parseFloat(quantity) <= 0) {
+            setBuyError('Please select a stock and enter a valid quantity');
+            return;
+        }
+
+        if (!cashBalance) {
+            setBuyError('Unable to verify cash balance');
+            return;
+        }
+
+        const qty = parseInt(quantity);
+        const price = parseFloat(stockInfo.Price.replace('$', ''));
+        const totalCost = price * qty;
+
+        if (totalCost > cashBalance.balance) {
+            setBuyError(`Insufficient funds. Required: $${totalCost.toFixed(2)}, Available: $${cashBalance.balance.toFixed(2)}`);
+            return;
+        }
+
+        try {
+            setBuyLoading(true);
+            setBuyError(null);
+            setBuySuccess(null);
+
+            const buyRequest: BuyRequest = {
+                ticker: stockInfo.Symbol,
+                quantity: qty,
+                price: price,
+                tradeDate: new Date().toISOString().split('T')[0] // Today's date in YYYY-MM-DD format
+            };
+
+            const response = await apiService.executeBuy(buyRequest);
+
+            if (response.success) {
+                setBuySuccess(`Successfully bought ${qty} shares of ${stockInfo.Symbol} for $${totalCost.toFixed(2)}`);
+                setQuantity('');
+                
+                // Update cash balance with the remaining cash from the response
+                if (response.remainingCash !== undefined) {
+                    setCashBalance({
+                        balance: response.remainingCash,
+                        formattedBalance: `$${response.remainingCash.toFixed(2)}`
+                    });
+                }
+                
+                // Refresh buy trades
+                const updatedTrades = await apiService.getTradesByType('BUY');
+                setBuyTrades(updatedTrades);
+                
+                // Trigger portfolio refresh to update Stats and Assets components
+                triggerRefresh();
+            } else {
+                setBuyError(response.error || 'Buy transaction failed');
+            }
+        } catch (err) {
+            setBuyError('Failed to execute buy transaction');
+            console.error('Error executing buy transaction:', err);
+        } finally {
+            setBuyLoading(false);
+        }
+    };
+
     const calculateTotal = () => {
         if (!stockInfo) return '0.00';
         const price = parseFloat(stockInfo.Price.replace('$', ''));
@@ -131,8 +224,9 @@ const Buys = () => {
     };
 
     const exceedCash = () => {
+        if (!cashBalance) return false;
         const total = parseFloat(calculateTotal());
-        return total > cashOnHand && parseFloat(quantity) > 0;
+        return total > cashBalance.balance && parseFloat(quantity) > 0;
     };
 
     const getMarketStatusStyles = () => {
@@ -321,36 +415,45 @@ const Buys = () => {
                             </div>
                         </div>
 
+                        {/* Error/Success Messages */}
+                        {buyError && (
+                            <div className="bg-red-100 text-red-700 text-sm p-2 rounded-lg">
+                                ❌ {buyError}
+                            </div>
+                        )}
+
+                        {buySuccess && (
+                            <div className="bg-green-100 text-green-700 text-sm p-2 rounded-lg">
+                                ✅ {buySuccess}
+                            </div>
+                        )}
+
+                        {/* Market Status Indicator */}
+                        {!marketOpen && (
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-2 text-center">
+                                <span className="text-red-700 text-sm font-medium">Market Closed - Cannot Buy</span>
+                            </div>
+                        )}
+
                         {/* Action Buttons */}
                         <div className="flex space-x-5 pt-4">
                             <button 
-                                className="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-medium py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                disabled={!stockInfo || parseFloat(quantity) <= 0}
-                                onClick={() => {
-                                    const total = parseFloat(calculateTotal());
-                                    const qty = parseFloat(quantity) || 0;
-
-                                    if (qty <= 0 || !Number.isInteger(qty)) {
-                                        setInvalidqty(true);
-                                        return;
-                                    }
-
-                                    if (total > cashOnHand) {
-                                        setInvalidqty(true);
-                                        return;
-                                    } 
-                                    // If validation passes
-                                    setInvalidqty(false);
-                                    
-                                    setQuantity('');
-
-                                }}> 
-                                Buy
+                                className={`flex-1 font-medium py-3 px-6 rounded-lg transition-colors ${
+                                    !stockInfo || parseFloat(quantity) <= 0 || buyLoading || !marketOpen
+                                        ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                                        : 'bg-purple-500 hover:bg-purple-600 text-white'
+                                } ${!marketOpen ? 'hover:cursor-not-allowed' : ''}`}
+                                disabled={!stockInfo || parseFloat(quantity) <= 0 || buyLoading || !marketOpen}
+                                onClick={handleBuyTransaction}
+                            > 
+                                {buyLoading ? 'Processing...' : 'Buy'}
                             </button>
                             <button className="flex-1 border border-gray-300 bg-white hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 rounded-lg transition-colors"
                                 onClick={() => {
                                     setQuantity('');
                                     setInvalidqty(false);
+                                    setBuyError(null);
+                                    setBuySuccess(null);
                                 }}>
                                 Cancel
                             </button>
