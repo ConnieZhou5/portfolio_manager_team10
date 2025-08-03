@@ -160,11 +160,10 @@ const Buys = () => {
         }
         
         if (value.trim()) {
-            // TODO: debounce the search to prevent excessive API calls
             // Set new timeout
             const timeoutId = setTimeout(() => {
                 searchStock(value);
-            }, 500);
+            }, 500); // Added 500ms debounce to prevent excessive API calls
             setSearchTimeout(timeoutId);
         } else {
             setStockInfo(null);

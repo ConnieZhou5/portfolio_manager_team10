@@ -10,9 +10,98 @@ interface Properties {
     change?: string;
     changeType?: ChangeType;
     icon?: React.ReactNode;
+    onClick?: () => void;
+    clickable?: boolean;
 }
 
-const StatsCard: React.FC<Properties> = ({ title, value, change, changeType, icon }) => {
+interface CashModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onAddCash: (amount: number) => void;
+    currentCash: string;
+}
+
+const CashModal: React.FC<CashModalProps> = ({ isOpen, onClose, onAddCash, currentCash }) => {
+    const [amount, setAmount] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!amount || isNaN(Number(amount))) return;
+
+        setIsLoading(true);
+        try {
+            await onAddCash(Number(amount));
+            setAmount('');
+            onClose();
+        } catch (error) {
+            console.error('Error adding cash:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Add Cash</h3>
+                    <button
+                        onClick={onClose}
+                        className="text-gray-400 hover:text-gray-600"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <div className="mb-4">
+                    <p className="text-sm text-gray-600 mb-2">Current Cash: {currentCash}</p>
+                    <form onSubmit={handleSubmit}>
+                        <div className="mb-4">
+                            <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-2">
+                                Amount to Add ($)
+                            </label>
+                            <input
+                                type="number"
+                                id="amount"
+                                value={amount}
+                                onChange={(e) => setAmount(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                placeholder="Enter amount"
+                                step="0.01"
+                                min="0"
+                                required
+                            />
+                        </div>
+                        
+                        <div className="flex justify-end space-x-3">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={isLoading || !amount}
+                                className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isLoading ? 'Adding...' : 'Add Cash'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const StatsCard: React.FC<Properties> = ({ title, value, change, changeType, icon, onClick, clickable }) => {
     //change color for the icon based on if day's gain is profit or loss 
     const getChangeColor = () => {
         if (changeType === 'positive') return 'text-green-600';
@@ -31,8 +120,17 @@ const StatsCard: React.FC<Properties> = ({ title, value, change, changeType, ico
         return 'border-l-purple-500';
     };
 
+    const handleClick = () => {
+        if (clickable && onClick) {
+            onClick();
+        }
+    };
+
     return (
-        <div className={`bg-white rounded-lg p-4 shadow-sm border-l-4 ${getBorderColor()} hover:shadow-md transition-shadow duration-200`}>
+        <div 
+            className={`bg-white rounded-lg p-4 shadow-sm border-l-4 ${getBorderColor()} hover:shadow-md transition-shadow duration-200 ${clickable ? 'cursor-pointer hover:bg-gray-50' : ''}`}
+            onClick={handleClick}
+        >
             <div className="flex items-center justify-between">
                 <div className="flex-1">
                     <p className="text-2xl text-gray-600 mb-2 text-left">{title}</p>
@@ -61,7 +159,24 @@ const PortfolioStatsCards = () => {
     const [stats, setStats] = useState<PortfolioStats | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isCashModalOpen, setIsCashModalOpen] = useState(false);
     const { refreshTrigger } = usePortfolio();
+
+    const handleAddCash = async (amount: number) => {
+        try {
+            await apiService.addCash(amount);
+            // Refresh the stats to show updated cash balance
+            const updatedStats = await apiService.getPortfolioStats();
+            setStats(updatedStats);
+        } catch (error) {
+            console.error('Error adding cash:', error);
+            throw error;
+        }
+    };
+
+    const handleCashCardClick = () => {
+        setIsCashModalOpen(true);
+    };
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -197,6 +312,8 @@ const PortfolioStatsCards = () => {
                     <StatsCard
                         title="Cash"
                         value={stats.cash}
+                        clickable={true}
+                        onClick={handleCashCardClick}
                         icon={
                             <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -205,6 +322,14 @@ const PortfolioStatsCards = () => {
                     />
                 </div>
             </div>
+            
+            {/* Cash Modal */}
+            <CashModal
+                isOpen={isCashModalOpen}
+                onClose={() => setIsCashModalOpen(false)}
+                onAddCash={handleAddCash}
+                currentCash={stats.cash}
+            />
         </div>
     );
 };

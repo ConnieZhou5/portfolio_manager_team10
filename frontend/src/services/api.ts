@@ -124,6 +124,13 @@ class ApiService {
     return this.request<CashBalance>(`${CASH_API_BASE_URL}`);
   }
 
+  async addCash(amount: number): Promise<CashBalance> {
+    return this.request<CashBalance>(`${CASH_API_BASE_URL}/add`, {
+      method: 'POST',
+      body: JSON.stringify({ amount }),
+    });
+  }
+
   async getAllTradeHistory(): Promise<TradeHistory[]> {
     return this.request<TradeHistory[]>(`${TRADE_HISTORY_API_BASE_URL}`);
   }
