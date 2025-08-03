@@ -1,11 +1,11 @@
 -- Optional: delete all data before inserting
-DELETE FROM portfolio_daily_value;
+DELETE FROM portfolio_daily_values;
 DELETE FROM portfolio_monthly_summaries;
 DELETE FROM cash_account;
 DELETE FROM portfolio_item;
 DELETE FROM trade_history;
 
-INSERT INTO portfolio_daily_value (cash_value, investments_value, snapshot_date, total_value) VALUES
+INSERT INTO portfolio_daily_values (cash_value, investments_value, snapshot_date, total_value) VALUES
 (7000.00, 45000.00, '2025-07-02', 52000.00),
 (6979.89, 46768.96, '2025-07-03', 53748.85),
 (6954.97, 48318.82, '2025-07-04', 55273.79),
@@ -35,7 +35,9 @@ INSERT INTO portfolio_daily_value (cash_value, investments_value, snapshot_date,
 (7273.42, 62645.15, '2025-07-28', 69918.57),
 (7343.76, 63329.51, '2025-07-29', 70673.27),
 (7397.41, 63497.32, '2025-07-30', 70894.73),
-(7400.00, 64000.00, '2025-07-31', 71400.00);
+(7400.00, 64000.00, '2025-07-31', 71400.00),
+(7425.20, 64500.10, '2025-08-01', 71925.30),
+(7400.00, 55592.66, '2025-08-02', 62992.66);
 
 INSERT INTO cash_account (balance, last_updated) VALUES
 (7400.00, '2025-07-31 22:31:35.718874');
@@ -55,15 +57,9 @@ INSERT INTO portfolio_monthly_summaries
 (4, -973.87, -1.53, 62663.02, 2025),
 (5, 1148.89, 1.83, 63811.91, 2025),
 (6, 3521.26, 5.52, 67333.17, 2025),
-(7, -63687.37, -94.59, 3645.80, 2025);
+(7, 19400.00, 37.31, 71400.00, 2025);
 
-INSERT INTO portfolio_item (buy_date, buy_price, quantity, ticker)
-VALUES
-('2025-06-15', 210.00, 100, 'AAPL'),
-('2025-07-01', 400.00, 80, 'MSFT'),
-('2025-07-20', 440.00, 25, 'GOOGL');
-
--- Add some trade history for BUY and SELL transactions
+-- Add trade history for BUY and SELL transactions
 INSERT INTO trade_history (trade_date, ticker, quantity, price, trade_type)
 VALUES
 -- BUY transactions
@@ -73,6 +69,16 @@ VALUES
 -- SELL transactions (for realized gains)
 ('2025-07-15', 'AAPL', 20, 220.00, 'SELL'),  -- Sold 20 AAPL at $220 (bought at $210)
 ('2025-07-25', 'MSFT', 10, 420.00, 'SELL');  -- Sold 10 MSFT at $420 (bought at $400)
+
+-- Portfolio items reflecting current holdings after all BUY and SELL transactions
+-- AAPL: 100 bought - 20 sold = 80 shares remaining
+-- MSFT: 80 bought - 10 sold = 70 shares remaining  
+-- GOOGL: 25 bought - 0 sold = 25 shares remaining
+INSERT INTO portfolio_item (buy_date, buy_price, quantity, ticker)
+VALUES
+('2025-06-15', 210.00, 80, 'AAPL'),   -- 80 shares remaining after selling 20
+('2025-07-01', 400.00, 70, 'MSFT'),   -- 70 shares remaining after selling 10
+('2025-07-20', 440.00, 25, 'GOOGL');  -- 25 shares remaining (no sales)
 
 
 

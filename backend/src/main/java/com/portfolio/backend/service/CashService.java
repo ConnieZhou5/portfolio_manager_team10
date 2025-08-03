@@ -20,7 +20,7 @@ public class CashService {
      * @return Current cash balance
      */
     public BigDecimal getCashBalance() {
-        Optional<CashAccount> cashAccount = cashAccountRepository.findFirstByOrderByIdAsc();
+        Optional<CashAccount> cashAccount = cashAccountRepository.findFirstByOrderByLastUpdatedDesc();
         return cashAccount.map(CashAccount::getBalance).orElse(BigDecimal.ZERO);
     }
     

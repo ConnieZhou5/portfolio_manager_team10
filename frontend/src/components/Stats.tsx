@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { apiService, PortfolioStats } from '../services/api';
+import { apiService, PortfolioStats, PortfolioItem } from '../services/api';
 import { usePortfolio } from '../context/PortfolioContext';
 
 type ChangeType = 'positive' | 'negative' | 'neutral'
@@ -67,9 +67,51 @@ const PortfolioStatsCards = () => {
         const fetchStats = async () => {
             try {
                 setLoading(true);
-                const data = await apiService.getPortfolioStats();
-                setStats(data);
                 setError(null);
+                
+                // Fetch portfolio stats and portfolio items
+                const [portfolioStats, portfolioItems] = await Promise.all([
+                    apiService.getPortfolioStats(),
+                    apiService.getAllPortfolioItems()
+                ]);
+
+                // Calculate investments value using current market prices
+                let investmentsValue = 0;
+                if (portfolioItems.length > 0) {
+                    try {
+                        const symbols = portfolioItems.map(item => item.ticker);
+                        const stockData = await apiService.getStockData(symbols);
+                        
+                        // Calculate investments value using current market prices
+                        investmentsValue = portfolioItems.reduce((total, item) => {
+                            const currentStock = stockData.find(stock => stock.symbol === item.ticker);
+                            const currentPrice = currentStock?.price || item.buyPrice;
+                            return total + (currentPrice * item.quantity);
+                        }, 0);
+                    } catch (err) {
+                        console.error('Error fetching stock data for stats, using buy prices as fallback:', err);
+                        // Fallback to buy prices if stock data fetch fails
+                        investmentsValue = portfolioItems.reduce((total, item) => {
+                            return total + (item.buyPrice * item.quantity);
+                        }, 0);
+                    }
+                } else {
+                    // Use portfolio stats investments value if no portfolio items
+                    investmentsValue = parseFloat(portfolioStats.investments.replace('$', '').replace(',', ''));
+                }
+
+                // Parse cash value
+                const cashValue = parseFloat(portfolioStats.cash.replace('$', '').replace(',', ''));
+                const totalAssetsValue = cashValue + investmentsValue;
+
+                // Create updated stats object with market-based investments value
+                const updatedStats: PortfolioStats = {
+                    ...portfolioStats,
+                    investments: `$${investmentsValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+                    totalAssets: `$${totalAssetsValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}`
+                };
+
+                setStats(updatedStats);
             } catch (err) {
                 setError('Failed to load portfolio statistics. Check if backend is running.');
                 console.error('Error fetching stats:', err);

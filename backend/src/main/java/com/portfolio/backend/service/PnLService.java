@@ -100,12 +100,7 @@ public class PnLService {
                 sellTrade.getTradeDate()
         );
         
-        System.out.println("Calculating realized gain for SELL trade: " + sellTrade.getTicker() + 
-            " at " + sellTrade.getPrice() + " on " + sellTrade.getTradeDate());
-        System.out.println("Found " + buyTrades.size() + " BUY trades before sell date");
-        
         if (buyTrades.isEmpty()) {
-            System.out.println("No buy trades found for " + sellTrade.getTicker());
             return BigDecimal.ZERO; // No buy trades found
         }
         
@@ -119,7 +114,6 @@ public class PnLService {
                 .sum();
         
         if (totalBuyQuantity == 0) {
-            System.out.println("Total buy quantity is 0 for " + sellTrade.getTicker());
             return BigDecimal.ZERO;
         }
         
@@ -129,11 +123,6 @@ public class PnLService {
         BigDecimal sellValue = sellTrade.getTotalValue();
         BigDecimal buyValue = averageBuyPrice.multiply(BigDecimal.valueOf(sellTrade.getQuantity()));
         BigDecimal realizedGain = sellValue.subtract(buyValue);
-        
-        System.out.println("Average buy price: " + averageBuyPrice + 
-            ", Sell value: " + sellValue + 
-            ", Buy value: " + buyValue + 
-            ", Realized gain: " + realizedGain);
         
         return realizedGain;
     }
@@ -150,8 +139,6 @@ public class PnLService {
         
         BigDecimal totalUnrealized = BigDecimal.ZERO;
         
-        System.out.println("Calculating unrealized gains as of: " + asOfDate);
-        
         for (PortfolioItem holding : holdings) {
             // Only include holdings that were bought before or on the asOfDate
             if (holding.getBuyDate().isBefore(asOfDate) || holding.getBuyDate().isEqual(asOfDate)) {
@@ -161,16 +148,9 @@ public class PnLService {
                 BigDecimal unrealizedGain = currentPrice.subtract(buyPrice)
                         .multiply(BigDecimal.valueOf(holding.getQuantity()));
                 totalUnrealized = totalUnrealized.add(unrealizedGain);
-                
-                System.out.println("Holding: " + holding.getTicker() + 
-                    ", Buy Price: " + buyPrice + 
-                    ", Current Price: " + currentPrice + 
-                    ", Quantity: " + holding.getQuantity() + 
-                    ", Unrealized Gain: " + unrealizedGain);
             }
         }
         
-        System.out.println("Total unrealized gains: " + totalUnrealized);
         return totalUnrealized;
     }
 

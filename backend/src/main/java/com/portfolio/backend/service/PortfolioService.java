@@ -174,7 +174,7 @@ public class PortfolioService {
         BigDecimal cash = cashService.getCashBalance();
         BigDecimal totalPortfolioValue = getTotalPortfolioValue(); // investments
         BigDecimal totalAssets = totalPortfolioValue.add(cash);
-        
+                
         // Calculate day's gain
         LocalDate today = LocalDate.now();
         BigDecimal daysGain = BigDecimal.ZERO;

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { apiService, PortfolioStats, CashBalance } from '../services/api';
+import { apiService } from '../services/api';
 import { usePortfolio } from '../context/PortfolioContext';
 
-interface Asset {
+interface AssetData {
     name: string;
     percentage: number;
     value: number;
@@ -10,7 +10,7 @@ interface Asset {
 }
 
 const Asset = () => {
-    const [assets, setAssets] = useState<Asset[]>([]);
+    const [assets, setAssets] = useState<AssetData[]>([]);
     const [totalValue, setTotalValue] = useState<number>(0);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
@@ -22,22 +22,47 @@ const Asset = () => {
                 setLoading(true);
                 setError(null);
 
-                // Fetch portfolio stats and cash balance
-                const [portfolioStats, cashBalance] = await Promise.all([
+                // Fetch portfolio stats and portfolio items
+                const [portfolioStats, portfolioItems] = await Promise.all([
                     apiService.getPortfolioStats(),
-                    apiService.getCashBalance()
+                    apiService.getAllPortfolioItems()
                 ]);
 
-                // Parse the currency strings to get numeric values
+                // Get current market prices for all portfolio items
+                let investmentsValue = 0;
+                if (portfolioItems.length > 0) {
+                    try {
+                        const symbols = portfolioItems.map(item => item.ticker);
+                        const stockData = await apiService.getStockData(symbols);
+                        
+                        // Calculate investments value using current market prices
+                        investmentsValue = portfolioItems.reduce((total, item) => {
+                            const currentStock = stockData.find(stock => stock.symbol === item.ticker);
+                            const currentPrice = currentStock?.price || item.buyPrice;
+                            const itemValue = currentPrice * item.quantity;
+                            return total + itemValue;
+                        }, 0);
+                    } catch (err) {
+                        console.error('Error fetching stock data, using buy prices as fallback:', err);
+                        // Fallback to buy prices if stock data fetch fails
+                        investmentsValue = portfolioItems.reduce((total, item) => {
+                            return total + (item.buyPrice * item.quantity);
+                        }, 0);
+                    }
+                } else {
+                    // Use portfolio stats investments value if no portfolio items
+                    investmentsValue = parseFloat(portfolioStats.investments.replace('$', '').replace(',', ''));
+                }
+
+                // Parse the cash value
                 const cashValue = parseFloat(portfolioStats.cash.replace('$', '').replace(',', ''));
-                const investmentsValue = parseFloat(portfolioStats.investments.replace('$', '').replace(',', ''));
-                const totalAssetsValue = parseFloat(portfolioStats.totalAssets.replace('$', '').replace(',', ''));
+                const totalAssetsValue = cashValue + investmentsValue;
 
                 // Calculate percentages
                 const cashPercentage = totalAssetsValue > 0 ? (cashValue / totalAssetsValue) * 100 : 0;
                 const equitiesPercentage = totalAssetsValue > 0 ? (investmentsValue / totalAssetsValue) * 100 : 0;
 
-                const assetData: Asset[] = [
+                const assetData: AssetData[] = [
                     { 
                         name: 'Cash', 
                         percentage: Math.round(cashPercentage * 10) / 10, 
@@ -68,7 +93,6 @@ const Asset = () => {
     // Calculate stroke-dasharray for donut chart
     const radius = 100;
     const circumference = 2 * Math.PI * radius;
-    const cashOffset = 0;
     const equitiesOffset = assets.length > 0 ? (assets[0].percentage / 100) * circumference : 0;
 
     if (loading) {

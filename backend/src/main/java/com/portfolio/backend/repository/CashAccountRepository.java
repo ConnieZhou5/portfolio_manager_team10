@@ -18,6 +18,13 @@ public interface CashAccountRepository extends JpaRepository<CashAccount, Long> 
     Optional<CashAccount> findFirstByOrderByIdAsc();
     
     /**
+     * Find the most recent cash account by lastUpdated timestamp
+     * 
+     * @return Optional containing the most recent cash account
+     */
+    Optional<CashAccount> findFirstByOrderByLastUpdatedDesc();
+    
+    /**
      * Check if any cash account exists
      * 
      * @return true if a cash account exists

@@ -22,17 +22,13 @@ public class CreateDatabase {
             String checkSql = "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '" + dbName + "'";
             ResultSet rs = stmt.executeQuery(checkSql);
 
-            if (rs.next()) {
-                System.out.println("ℹ️ Database '" + dbName + "' already exists.");
-            } else {
+            if (!rs.next()) {
                 String createSql = "CREATE DATABASE " + dbName;
                 stmt.executeUpdate(createSql);
-                System.out.println("✅ Database '" + dbName + "' created successfully.");
             }
 
             stmt.close();
             conn.close();
-            System.out.println("ℹ️ Tables will be created automatically by Spring Boot when the application starts.");
         } catch (SQLException e) {
             System.out.println("❌ Error while creating database: " + e.getMessage());
         }
