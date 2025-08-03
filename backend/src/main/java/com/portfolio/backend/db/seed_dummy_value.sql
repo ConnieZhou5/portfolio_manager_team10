@@ -3,7 +3,7 @@ DELETE FROM portfolio_daily_value;
 DELETE FROM portfolio_monthly_summaries;
 DELETE FROM cash_account;
 DELETE FROM portfolio_item;
-
+DELETE FROM trade_history;
 
 INSERT INTO portfolio_daily_value (cash_value, investments_value, snapshot_date, total_value) VALUES
 (7000.00, 45000.00, '2025-07-02', 52000.00),
@@ -62,6 +62,17 @@ VALUES
 ('2025-06-15', 210.00, 100, 'AAPL'),
 ('2025-07-01', 400.00, 80, 'MSFT'),
 ('2025-07-20', 440.00, 25, 'GOOGL');
+
+-- Add some trade history for BUY and SELL transactions
+INSERT INTO trade_history (trade_date, ticker, quantity, price, trade_type)
+VALUES
+-- BUY transactions
+('2025-06-15', 'AAPL', 100, 210.00, 'BUY'),
+('2025-07-01', 'MSFT', 80, 400.00, 'BUY'),
+('2025-07-20', 'GOOGL', 25, 440.00, 'BUY'),
+-- SELL transactions (for realized gains)
+('2025-07-15', 'AAPL', 20, 220.00, 'SELL'),  -- Sold 20 AAPL at $220 (bought at $210)
+('2025-07-25', 'MSFT', 10, 420.00, 'SELL');  -- Sold 10 MSFT at $420 (bought at $400)
 
 
 

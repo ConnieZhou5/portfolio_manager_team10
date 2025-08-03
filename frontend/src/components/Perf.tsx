@@ -1,19 +1,107 @@
-import React from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
+import React, { useState, useEffect } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
+import { apiService, PnLResponse, MonthlyPnLData } from '../services/api';
 
-const performanceData = [
-    { month: 'Jan', realized: 0, unrealized: 100 },
-    { month: 'Feb', realized: 120, unrealized: 340 },
-    { month: 'Mar', realized: 200, unrealized: 520 },
-    { month: 'Apr', realized: 200, unrealized: 660 },
-    { month: 'May', realized: 320, unrealized: 820 },
-    { month: 'Jun', realized: 330, unrealized: 860 },
-    { month: 'Jul', realized: 330, unrealized: 950 }
-];
+// Custom tooltip component
+const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+                <p className="text-gray-600 font-medium mb-2">{label}</p>
+                {payload.map((entry: any, index: number) => (
+                    <p key={index} className="text-sm" style={{ color: entry.color }}>
+                        {entry.name}: ${entry.value.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    </p>
+                ))}
+            </div>
+        );
+    }
+    return null;
+};
 
 export default function Performance() {
-    return (
+    const [pnLData, setPnLData] = useState<PnLResponse | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
+    useEffect(() => {
+        const fetchPnLData = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const data = await apiService.getMonthlyPnL();
+                setPnLData(data);
+            } catch (err) {
+                setError('Failed to load P&L data. Check if backend is running.');
+                console.error('Error fetching P&L data:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPnLData();
+    }, []);
+
+    // Calculate Y-axis domain with clean intervals
+    const calculateYAxisDomain = (data: MonthlyPnLData[]) => {
+        if (!data || data.length === 0) return [0, 1000];
+        
+        const allValues = data.flatMap(item => [item.realized, item.unrealized]);
+        const minValue = Math.min(...allValues);
+        const maxValue = Math.max(...allValues);
+        
+        // Add some padding to the range
+        const range = maxValue - minValue;
+        const padding = range * 0.1;
+        
+        const domainMin = Math.floor((minValue - padding) / 100) * 100;
+        const domainMax = Math.ceil((maxValue + padding) / 100) * 100;
+        
+        return [domainMin, domainMax];
+    };
+
+    if (loading) {
+        return (
+            <div className="bg-white rounded-2xl p-10 max-w-6xl mx-auto shadow-lg mb-20">
+                <div className="mb-8">
+                    <h1 className="text-2xl text-gray-500 mb-8 text-left">Profit and Loss</h1>
+                </div>
+                <div className="flex items-center justify-center h-80">
+                    <div className="text-gray-500">Loading P&L data...</div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="bg-white rounded-2xl p-10 max-w-6xl mx-auto shadow-lg mb-20">
+                <div className="mb-8">
+                    <h1 className="text-2xl text-gray-500 mb-8 text-left">Profit and Loss</h1>
+                </div>
+                <div className="flex items-center justify-center h-80">
+                    <div className="text-red-500">{error}</div>
+                </div>
+            </div>
+        );
+    }
+
+    if (!pnLData) {
+        return (
+            <div className="bg-white rounded-2xl p-10 max-w-6xl mx-auto shadow-lg mb-20">
+                <div className="mb-8">
+                    <h1 className="text-2xl text-gray-500 mb-8 text-left">Profit and Loss</h1>
+                </div>
+                <div className="flex items-center justify-center h-80">
+                    <div className="text-gray-500">No P&L data available</div>
+                </div>
+            </div>
+        );
+    }
+
+    const yAxisDomain = calculateYAxisDomain(pnLData.monthlyData);
+
+    return (
         <div className="bg-white rounded-2xl p-10 max-w-6xl mx-auto shadow-lg mb-20">
             <div className="mb-8">
                 <h1 className="text-2xl text-gray-500 mb-8 text-left">Profit and Loss</h1>
@@ -24,7 +112,7 @@ export default function Performance() {
                 <div className="flex-1">
                     <div className="h-80 w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={performanceData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                            <LineChart data={pnLData.monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                                 <XAxis
                                     dataKey="month"
@@ -36,14 +124,17 @@ export default function Performance() {
                                     axisLine={false}
                                     tickLine={false}
                                     tick={{ fill: '#6b7280', fontSize: 12 }}
-                                    domain={[0, 1000]}
+                                    domain={yAxisDomain}
+                                    tickFormatter={(value) => `$${value.toLocaleString()}`}
                                 />
+                                <Tooltip content={<CustomTooltip />} />
                                 <Line
                                     type="monotone"
                                     dataKey="realized"
                                     stroke="#8b5cf6"
                                     strokeWidth={2}
-                                    dot={false}
+                                    dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 4 }}
+                                    activeDot={{ r: 6, stroke: '#8b5cf6', strokeWidth: 2 }}
                                     name="Realized Gains"
                                 />
                                 <Line
@@ -51,7 +142,8 @@ export default function Performance() {
                                     dataKey="unrealized"
                                     stroke="#3b82f6"
                                     strokeWidth={2}
-                                    dot={false}
+                                    dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
+                                    activeDot={{ r: 6, stroke: '#3b82f6', strokeWidth: 2 }}
                                     name="Unrealized Gains"
                                 />
                             </LineChart>
@@ -85,7 +177,7 @@ export default function Performance() {
                                 <tr className="border-b border-gray-100 font-semibold">
                                     <td className="px-6 py-4 text-sm text-gray-900 text-left">Total P&L</td>
                                     <td className="px-6 py-4 text-sm text-gray-900 text-right">
-                                        $1,210.00
+                                        ${pnLData.totalPnL.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                     </td>
                                 </tr>
                                 <tr className="border-b border-gray-50">
@@ -93,7 +185,7 @@ export default function Performance() {
                                         Realized
                                     </td>
                                     <td className="px-6 py-4 text-sm text-gray-700 text-right">
-                                        $260.00
+                                        ${pnLData.totalRealized.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                     </td>
                                 </tr>
                                 <tr className="border-b border-gray-50">
@@ -101,7 +193,7 @@ export default function Performance() {
                                         Unrealized
                                     </td>
                                     <td className="px-6 py-4 text-sm text-gray-700 text-right">
-                                        $950.00
+                                        ${pnLData.totalUnrealized.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                     </td>
                                 </tr>
                             </tbody>
@@ -110,7 +202,6 @@ export default function Performance() {
                 </div>
             </div>
         </div>
-        
     );
 }
 

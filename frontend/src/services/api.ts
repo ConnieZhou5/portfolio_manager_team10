@@ -87,6 +87,19 @@ export interface PortfolioItem {
   totalValue: number;
 }
 
+export interface MonthlyPnLData {
+  month: string;
+  realized: number;
+  unrealized: number;
+}
+
+export interface PnLResponse {
+  monthlyData: MonthlyPnLData[];
+  totalRealized: number;
+  totalUnrealized: number;
+  totalPnL: number;
+}
+
 class ApiService {
   private async request<T>(url: string, options?: RequestInit): Promise<T> {
     const response = await fetch(url, {
@@ -173,6 +186,10 @@ class ApiService {
     return this.request<void>(`${API_BASE_URL}/${id}`, {
       method: 'DELETE',
     });
+  }
+
+  async getMonthlyPnL(): Promise<PnLResponse> {
+    return this.request<PnLResponse>(`http://localhost:8080/api/pnl/monthly`);
   }
 }
 
