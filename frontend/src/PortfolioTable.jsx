@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { API_ENDPOINTS } from './config/api';
 
 const PortfolioTable = () => {
   const [symbolsInput, setSymbolsInput] = useState('');
@@ -11,7 +12,7 @@ const PortfolioTable = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.post('http://localhost:8080/api/portfolio/stock-data', {
+      const response = await axios.post(`${API_ENDPOINTS.STOCK_DATA}`, {
         symbols,
       });
       setPortfolio(response.data);

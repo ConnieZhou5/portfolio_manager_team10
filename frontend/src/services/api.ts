@@ -1,7 +1,4 @@
-const API_BASE_URL = 'http://localhost:8080/api/portfolio';
-const CASH_API_BASE_URL = 'http://localhost:8080/api/cash';
-const TRADE_HISTORY_API_BASE_URL = 'http://localhost:8080/api/trade-history';
-const STOCK_DATA_API_BASE_URL = 'http://localhost:8080/api/stock-data';
+import { API_ENDPOINTS } from '../config/api';
 
 export interface PortfolioStats {
   totalAssets: string;
@@ -117,86 +114,86 @@ class ApiService {
   }
 
   async getPortfolioStats(): Promise<PortfolioStats> {
-    return this.request<PortfolioStats>(`${API_BASE_URL}/stats`);
+    return this.request<PortfolioStats>(`${API_ENDPOINTS.PORTFOLIO}/stats`);
   }
 
   async getCashBalance(): Promise<CashBalance> {
-    return this.request<CashBalance>(`${CASH_API_BASE_URL}`);
+    return this.request<CashBalance>(`${API_ENDPOINTS.CASH}`);
   }
 
   async addCash(amount: number): Promise<CashBalance> {
-    return this.request<CashBalance>(`${CASH_API_BASE_URL}/add`, {
+    return this.request<CashBalance>(`${API_ENDPOINTS.CASH}/add`, {
       method: 'POST',
       body: JSON.stringify({ amount }),
     });
   }
 
   async getAllTradeHistory(): Promise<TradeHistory[]> {
-    return this.request<TradeHistory[]>(`${TRADE_HISTORY_API_BASE_URL}`);
+    return this.request<TradeHistory[]>(`${API_ENDPOINTS.TRADE_HISTORY}`);
   }
 
   async getTradesByType(tradeType: string): Promise<TradeHistory[]> {
-    return this.request<TradeHistory[]>(`${TRADE_HISTORY_API_BASE_URL}/type/${tradeType}`);
+    return this.request<TradeHistory[]>(`${API_ENDPOINTS.TRADE_HISTORY}/type/${tradeType}`);
   }
 
   async getTradesByTicker(ticker: string): Promise<TradeHistory[]> {
-    return this.request<TradeHistory[]>(`${TRADE_HISTORY_API_BASE_URL}/ticker/${ticker}`);
+    return this.request<TradeHistory[]>(`${API_ENDPOINTS.TRADE_HISTORY}/ticker/${ticker}`);
   }
 
   async getStockData(symbols: string[]): Promise<StockData[]> {
-    return this.request<StockData[]>(`${STOCK_DATA_API_BASE_URL}`, {
+    return this.request<StockData[]>(`${API_ENDPOINTS.STOCK_DATA}`, {
       method: 'POST',
       body: JSON.stringify({ symbols }),
     });
   }
 
   async executeBuy(buyRequest: BuyRequest): Promise<BuyResponse> {
-    return this.request<BuyResponse>(`http://localhost:8080/api/buy`, {
+    return this.request<BuyResponse>(`${API_ENDPOINTS.BUY}`, {
       method: 'POST',
       body: JSON.stringify(buyRequest),
     });
   }
 
   async executeSell(sellRequest: SellRequest): Promise<SellResponse> {
-    return this.request<SellResponse>(`http://localhost:8080/api/sell`, {
+    return this.request<SellResponse>(`${API_ENDPOINTS.SELL}`, {
       method: 'POST',
       body: JSON.stringify(sellRequest),
     });
   }
 
   async addTrade(trade: Omit<TradeHistory, 'id' | 'totalValue'>): Promise<TradeHistory> {
-    return this.request<TradeHistory>(`${TRADE_HISTORY_API_BASE_URL}`, {
+    return this.request<TradeHistory>(`${API_ENDPOINTS.TRADE_HISTORY}`, {
       method: 'POST',
       body: JSON.stringify(trade),
     });
   }
 
   async getAllPortfolioItems(): Promise<PortfolioItem[]> {
-    return this.request<PortfolioItem[]>(`${API_BASE_URL}`);
+    return this.request<PortfolioItem[]>(`${API_ENDPOINTS.PORTFOLIO}`);
   }
 
   async addPortfolioItem(item: Omit<PortfolioItem, 'id' | 'totalValue'>): Promise<PortfolioItem> {
-    return this.request<PortfolioItem>(`${API_BASE_URL}`, {
+    return this.request<PortfolioItem>(`${API_ENDPOINTS.PORTFOLIO}`, {
       method: 'POST',
       body: JSON.stringify(item),
     });
   }
 
   async updatePortfolioItem(id: number, item: Partial<PortfolioItem>): Promise<PortfolioItem> {
-    return this.request<PortfolioItem>(`${API_BASE_URL}/${id}`, {
+    return this.request<PortfolioItem>(`${API_ENDPOINTS.PORTFOLIO}/${id}`, {
       method: 'PUT',
       body: JSON.stringify(item),
     });
   }
 
   async deletePortfolioItem(id: number): Promise<void> {
-    return this.request<void>(`${API_BASE_URL}/${id}`, {
+    return this.request<void>(`${API_ENDPOINTS.PORTFOLIO}/${id}`, {
       method: 'DELETE',
     });
   }
 
   async getMonthlyPnL(): Promise<PnLResponse> {
-    return this.request<PnLResponse>(`http://localhost:8080/api/pnl/monthly`);
+    return this.request<PnLResponse>(`${API_ENDPOINTS.PNL}/monthly`);
   }
 }
 
