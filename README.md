@@ -1,3 +1,5 @@
+# Deployed: https://portfolio-manager-team10.vercel.app/
+
 # 💼 PortfolioManager
 An application to manage a financial portfolio. 
 Final project for the computer science foundation training.
