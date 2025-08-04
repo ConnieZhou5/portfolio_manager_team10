@@ -36,6 +36,7 @@ const Buys = () => {
     const [buyError, setBuyError] = useState<string | null>(null);
     const [buySuccess, setBuySuccess] = useState<string | null>(null);
     const [marketOpen, setMarketOpen] = useState(true);
+    const [isExpanded, setIsExpanded] = useState(false);
     const { triggerRefresh } = usePortfolio();
 
     // Auto-dismiss success and error messages after 10 seconds
@@ -77,13 +78,13 @@ const Buys = () => {
             try {
                 setLoading(true);
                 setError(null);
-                
+
                 // Fetch both buy trades and cash balance
                 const [trades, cash] = await Promise.all([
                     apiService.getTradesByType('BUY'),
                     apiService.getCashBalance()
                 ]);
-                
+
                 setBuyTrades(trades);
                 setCashBalance(cash);
             } catch (err) {
@@ -108,7 +109,7 @@ const Buys = () => {
             setSearchLoading(true);
             setSearchError(null);
             const stockData = await apiService.getStockData([ticker.toUpperCase()]);
-            
+
             if (stockData.length > 0 && stockData[0].error) {
                 setSearchError(`Error fetching data for ${ticker}: ${stockData[0].error}`);
                 setStockInfo(null);
@@ -124,7 +125,7 @@ const Buys = () => {
                 const yearLow = stock.yearLow || (price * 0.7);
                 const yearHigh = stock.yearHigh || (price * 1.3);
                 const marketStatus = stock.marketStatus || 'Market Open';
-                
+
                 setStockInfo({
                     Symbol: stock.symbol,
                     Name: stock.name || `${stock.symbol} Stock`,
@@ -153,12 +154,12 @@ const Buys = () => {
 
     const handleSymbolChange = (value: string) => {
         setSymbol(value);
-        
+
         // Clear previous timeout
         if (searchTimeout) {
             clearTimeout(searchTimeout);
         }
-        
+
         if (value.trim()) {
             // Set new timeout
             const timeoutId = setTimeout(() => {
@@ -208,7 +209,7 @@ const Buys = () => {
             if (response.success) {
                 setBuySuccess(`Successfully bought ${qty} shares of ${stockInfo.Symbol} for $${totalCost.toFixed(2)}`);
                 setQuantity('');
-                
+
                 // Update cash balance with the remaining cash from the response
                 if (response.remainingCash !== undefined) {
                     setCashBalance({
@@ -216,11 +217,11 @@ const Buys = () => {
                         formattedBalance: `$${response.remainingCash.toFixed(2)}`
                     });
                 }
-                
+
                 // Refresh buy trades
                 const updatedTrades = await apiService.getTradesByType('BUY');
                 setBuyTrades(updatedTrades);
-                
+
                 // Trigger portfolio refresh to update Stats and Assets components
                 triggerRefresh();
             } else {
@@ -255,7 +256,7 @@ const Buys = () => {
                 textClass: 'text-gray-700'
             };
         }
-        
+
         if (stockInfo.MarketStatus === 'Market Open') {
             return {
                 containerClass: 'bg-green-50 border-green-200',
@@ -298,9 +299,9 @@ const Buys = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className={`grid gap-8 transition-all duration-300 ${isExpanded ? 'grid-cols-1 lg:grid-cols-3' : 'grid-cols-1'}`}>
                 {/* Left Column - Stock Info */}
-                <div className="lg:col-span-2">
+                <div className={`transition-all duration-300 ${isExpanded ? 'lg:col-span-2' : 'col-span-1'}`}>
                     {/* Search Bar */}
                     <div className="relative mb-6">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center">
@@ -349,121 +350,168 @@ const Buys = () => {
                             <p className="text-red-800">{searchError}</p>
                         </div>
                     ) : (
-                        <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                            <p className="text-gray-600">Enter a stock symbol to search for real-time data</p>
-                        </div>
-                    )}
+                                <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                                    <p className="text-gray-600">Enter a stock symbol to search for real-time data</p>
+                                </div>
+                            )}
 
                     {/* Stock Details */}
-                    {stockInfo && (
-                        <div className="space-y-4">
-                            <div className="flex justify-between shadow-sm">
-                                <span className="text-gray-600">Open</span>
-                                <span className="font-medium text-gray-900">{stockInfo.Open}</span>
-                            </div>
-                            <div className="flex justify-between shadow-sm">
-                                <span className="text-gray-600">Previous Close</span>
-                                <span className="font-medium text-gray-900">{stockInfo.PrevClose}</span>
-                            </div>
-                            <div className="flex justify-between shadow-sm">
-                                <span className="text-gray-600">Volume</span>
-                                <span className="font-medium text-gray-900">{stockInfo.Volume}</span>
-                            </div>
-                            <div className="flex justify-between shadow-sm">
-                                <span className="text-gray-600">Day Range</span>
-                                <span className="font-medium text-gray-900">{stockInfo.DayRange}</span>
-                            </div>
-                            <div className="flex justify-between shadow-sm">
-                                <span className="text-gray-600">52 Week Range</span>
-                                <span className="font-medium text-gray-900">{stockInfo.WeekRange52}</span>
-                            </div>
-                        </div>
-                    )}
+                    <div className="relative">
+                        <div className="grid grid-cols-2 gap-8">
+                            {stockInfo && (
+                                <div className="space-y-4">
+                                    <div className="flex justify-between shadow-sm">
+                                        <span className="text-gray-600">Open</span>
+                                        <span className="font-medium text-gray-900">{stockInfo.Open}</span>
+                                    </div>
+                                    <div className="flex justify-between shadow-sm">
+                                        <span className="text-gray-600">Previous Close</span>
+                                        <span className="font-medium text-gray-900">{stockInfo.PrevClose}</span>
+                                    </div>
+                                    <div className="flex justify-between shadow-sm">
+                                        <span className="text-gray-600">Volume</span>
+                                        <span className="font-medium text-gray-900">{stockInfo.Volume}</span>
+                                    </div>
+                                </div>
+                            )}
 
-                    {/* placeholder */}
-                    <div className="mt-12 space-y-4">
-                        <div className="h-[500px] bg-gray-50 rounded-lg flex items-center justify-center">
-                            <span className="text-gray-400">Innovation brewing. Stay tuned.</span>
+                            <div className="space-y-4">
+                                {stockInfo && (
+                                    <div className="flex justify-between shadow-sm">
+                                        <span className="text-gray-600">Day Range</span>
+                                        <span className="font-medium text-gray-900">{stockInfo.DayRange}</span>
+                                    </div>
+                                )}
+
+                                {stockInfo && (
+                                    <div className="flex justify-between shadow-sm">
+                                        <span className="text-gray-600">52 Week Range</span>
+                                        <span className="font-medium text-gray-900">{stockInfo.WeekRange52}</span>
+                                    </div>
+                                )}
+
+                                {/* Toggle button - shows expand when collapsed, collapse when expanded */}
+
+                            </div>
+
+
+                            <div className="absolute top-24 -right-2 z-10">
+                                {isExpanded ? (
+                                    <button
+                                        onClick={() => setIsExpanded(false)}
+                                        className="bg-purple-500 hover:bg-purple-600 text-white p-2 rounded-full shadow-lg transition-colors"
+                                        aria-label="Close trading panel"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </button>
+                                ) : (
+                                        <button
+                                            onClick={() => setIsExpanded(true)}
+                                            className="bg-purple-500 hover:bg-purple-600 text-white p-2 rounded-full shadow-lg transition-colors"
+                                            aria-label="Open trading panel"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                            </svg>
+                                        </button>
+                                    )}
+                            </div>
+
+
+
+                            {/* Chart Placeholder */}
+                            <div className="flex mt-12 space-y-4">
+                                <div className="h-[500px] bg-gray-50 rounded-lg flex items-center justify-center">
+                                    <span className="text-gray-400">Innovation brewing. Stay tuned.</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
+
+
                 </div>
 
-                {/* Right Column - Buy Form and Transactions (Sticky) */}
-                <div className="space-y-6">
-                    {/* Buy Form */}
-                    <div className="bg-purple-50 rounded-2xl p-10 space-y-6">
-                        {/* Symbol Input */}
-                        <div className="flex">
-                            <label className="block text-md text-gray-700 mt-2">Symbol</label>
-                            <div className="ml-[59px] w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-medium">
-                                {stockInfo ? stockInfo.Symbol : 'Enter symbol'}
+                {/* Right Column - Buy Form and Transactions */}
+                {isExpanded && (
+                    <div className="space-y-6 animate-in slide-in-from-right duration-600">
+                        {/* Buy Form */}
+                        <div className="bg-purple-50 rounded-2xl p-10 space-y-6">
+                            {/* Symbol Input */}
+                            <div className="flex">
+                                <label className="block text-md text-gray-700 mt-2">Symbol</label>
+                                <div className="ml-[59px] w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-medium">
+                                    {stockInfo ? stockInfo.Symbol : 'Enter symbol'}
+                                </div>
                             </div>
+
+                            {/* Quantity Input */}
+                            <div className="flex">
+                                <label className="block text-md text-gray-700 mt-2">Quantity</label>
+                                <input
+                                    type="number"
+                                    className="text-center ml-[51px] w-full px-3 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    value={quantity}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        if (value === '' || (Number(value) >= 0 && Number.isInteger(Number(value)))) {
+                                            setQuantity(value);
+                                        }
+                                    }}
+                                    placeholder="0"
+                                />
+                            </div>
+
+                            {/* Order Type */}
+                            <div className="flex">
+                                <label className="block text-md text-gray-700 mt-2">Order</label>
+                                <div className="ml-[70px] w-full px-3 pr-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-medium">
+                                    {orderType}
+                                </div>
+                            </div>
+
+                            {/* Total */}
+                            <div className="flex">
+                                <label className="block text-md text-gray-700 mt-2">Total~</label>
+                                <div className="ml-[66px] w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-medium">
+                                    ${calculateTotal()}
+                                </div>
+                            </div>
+
+                            {/* Error/Success Messages */}
+                            {buyError && (
+                                <div className="bg-red-100 text-red-700 text-sm p-2 rounded-lg">
+                                    ❌ {buyError}
+                                </div>
+                            )}
+
+                            {buySuccess && (
+                                <div className="bg-green-100 text-green-700 text-sm p-2 rounded-lg">
+                                    ✅ {buySuccess}
+                                </div>
+                            )}
+
+                            {/* Market Status Indicator */}
+                            {!marketOpen && (
+                                <div className="bg-red-50 border border-red-200 rounded-lg p-2 text-center">
+                                    <span className="text-red-700 text-sm font-medium">Market Closed - Cannot Buy</span>
+                                </div>
+                            )}
+
+
                         </div>
-
-                        {/* Quantity Input */}
-                        <div className="flex">
-                            <label className="block text-md text-gray-700 mt-2">Quantity</label>
-                            <input
-                                type="number"
-                                className="text-center ml-[51px] w-full px-3 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                value={quantity}
-                                onChange={(e) => {
-                                    const value = e.target.value;
-                                    if (value === '' || (Number(value) >= 0 && Number.isInteger(Number(value)))) {
-                                        setQuantity(value);
-                                    }
-                                }}
-                                placeholder="0"
-                            />
-                        </div>
-
-                        {/* Order Type */}
-                        <div className="flex">
-                            <label className="block text-md text-gray-700 mt-2">Order</label>
-                            <div className="ml-[70px] w-full px-3 pr-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-medium">
-                                {orderType}
-                            </div>
-                        </div>
-
-                        {/* Total */}
-                        <div className="flex">
-                            <label className="block text-md text-gray-700 mt-2">Total~</label>
-                            <div className="ml-[66px] w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-medium">
-                                ${calculateTotal()}
-                            </div>
-                        </div>
-
-                        {/* Error/Success Messages */}
-                        {buyError && (
-                            <div className="bg-red-100 text-red-700 text-sm p-2 rounded-lg">
-                                ❌ {buyError}
-                            </div>
-                        )}
-
-                        {buySuccess && (
-                            <div className="bg-green-100 text-green-700 text-sm p-2 rounded-lg">
-                                ✅ {buySuccess}
-                            </div>
-                        )}
-
-                        {/* Market Status Indicator */}
-                        {!marketOpen && (
-                            <div className="bg-red-50 border border-red-200 rounded-lg p-2 text-center">
-                                <span className="text-red-700 text-sm font-medium">Market Closed - Cannot Buy</span>
-                            </div>
-                        )}
 
                         {/* Action Buttons */}
                         <div className="flex space-x-5 pt-4">
-                            <button 
-                                className={`flex-1 font-medium py-3 px-6 rounded-lg transition-colors ${
-                                    !stockInfo || parseFloat(quantity) <= 0 || buyLoading || !marketOpen
-                                        ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                                        : 'bg-purple-500 hover:bg-purple-600 text-white'
-                                } ${!marketOpen ? 'hover:cursor-not-allowed' : ''}`}
+                            <button
+                                className={`flex-1 font-medium py-3 px-6 rounded-lg transition-colors ${!stockInfo || parseFloat(quantity) <= 0 || buyLoading || !marketOpen
+                                    ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                                    : 'bg-purple-500 hover:bg-purple-600 text-white'
+                                    } ${!marketOpen ? 'hover:cursor-not-allowed' : ''}`}
                                 disabled={!stockInfo || parseFloat(quantity) <= 0 || buyLoading || !marketOpen}
                                 onClick={handleBuyTransaction}
-                            > 
+                            >
                                 {buyLoading ? 'Processing...' : 'Buy'}
                             </button>
                             <button className="flex-1 border border-gray-300 bg-white hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 rounded-lg transition-colors"
@@ -474,39 +522,39 @@ const Buys = () => {
                                     setBuySuccess(null);
                                 }}>
                                 Cancel
-                            </button>
+                                </button>
                         </div>
-                    </div>
 
-                    {/* Buy Transactions Log */}
-                    <div className="bg-gray-100 rounded-lg overflow-hidden shadow-sm">
-                        <h3 className="text-gray-600 pt-6 pb-2 pl-6 mb-1 font-medium text-left">Buy Transactions Log</h3>
-                        <div className="max-h-96 overflow-y-auto">
-                            {loading ? (
-                                <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left">
-                                    Loading buy transactions...
-                                </div>
-                            ) : error ? (
-                                <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-red-500 text-left">
-                                    {error}
-                                </div>
-                            ) : buyTrades.length === 0 ? (
-                                <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left">
-                                    No buy transactions found
-                                </div>
-                            ) : (
-                                buyTrades.map((trade, index) => (
-                                    <div key={trade.id} className={`pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left ${index < buyTrades.length - 1 ? 'border-b border-gray-100' : ''}`}>
-                                        Bought {trade.quantity} {trade.ticker} @ ${trade.price.toFixed(2)}
-                                        <br></br>
-                                        Total: ${trade.totalValue.toFixed(2)}
-                                        <span className="text-sm text-gray-500 block text-right">{formatDate(trade.tradeDate)}</span>
+                        {/* Buy Transactions Log */}
+                        <div className="bg-gray-100 rounded-lg overflow-hidden shadow-sm">
+                            <h3 className="text-gray-600 pt-6 pb-2 pl-6 mb-1 font-medium text-left">Buy Transactions Log</h3>
+                            <div className="max-h-96 overflow-y-auto">
+                                {loading ? (
+                                    <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left">
+                                        Loading buy transactions...
                                     </div>
-                                ))
-                            )}
+                                ) : error ? (
+                                    <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-red-500 text-left">
+                                        {error}
+                                    </div>
+                                ) : buyTrades.length === 0 ? (
+                                    <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left">
+                                        No buy transactions found
+                                    </div>
+                                ) : (
+                                                buyTrades.map((trade, index) => (
+                                                    <div key={trade.id} className={`pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left ${index < buyTrades.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                                                        Bought {trade.quantity} {trade.ticker} @ ${trade.price.toFixed(2)}
+                                                        <br />
+                                            Total: ${trade.totalValue.toFixed(2)}
+                                                        <span className="text-sm text-gray-500 block text-right">{formatDate(trade.tradeDate)}</span>
+                                                    </div>
+                                                ))
+                                            )}
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );
