@@ -36,7 +36,7 @@ const Buys = () => {
     const [buyError, setBuyError] = useState<string | null>(null);
     const [buySuccess, setBuySuccess] = useState<string | null>(null);
     const [marketOpen, setMarketOpen] = useState(true);
-    const [isExpanded, setIsExpanded] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(true);
     const { triggerRefresh } = usePortfolio();
 
     // Auto-dismiss success and error messages after 10 seconds
@@ -355,10 +355,10 @@ const Buys = () => {
                                 </div>
                             )}
 
-                    {/* Stock Details */}
+                                        {/* Stock Details */}
                     <div className="relative">
-                        <div className="grid grid-cols-2 gap-8">
-                            {stockInfo && (
+                        {stockInfo && (
+                            <div className="grid grid-cols-2 gap-8 mb-8">
                                 <div className="space-y-4">
                                     <div className="flex justify-between shadow-sm">
                                         <span className="text-gray-600">Open</span>
@@ -373,60 +373,47 @@ const Buys = () => {
                                         <span className="font-medium text-gray-900">{stockInfo.Volume}</span>
                                     </div>
                                 </div>
-                            )}
 
-                            <div className="space-y-4">
-                                {stockInfo && (
+                                <div className="space-y-4">
                                     <div className="flex justify-between shadow-sm">
                                         <span className="text-gray-600">Day Range</span>
                                         <span className="font-medium text-gray-900">{stockInfo.DayRange}</span>
                                     </div>
-                                )}
-
-                                {stockInfo && (
                                     <div className="flex justify-between shadow-sm">
                                         <span className="text-gray-600">52 Week Range</span>
                                         <span className="font-medium text-gray-900">{stockInfo.WeekRange52}</span>
                                     </div>
-                                )}
-
-                                {/* Toggle button - shows expand when collapsed, collapse when expanded */}
-
-                            </div>
-
-
-                            <div className="absolute top-24 -right-4 z-10">
-                                {isExpanded ? (
-                                    <button
-                                        onClick={() => setIsExpanded(false)}
-                                        className="bg-purple-500 hover:bg-purple-600 text-white p-2 rounded-full shadow-lg transition-colors"
-                                        aria-label="Close trading panel"
-                                    >
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                        </svg>
-                                    </button>
-                                ) : (
-                                        <button
-                                            onClick={() => setIsExpanded(true)}
-                                            className="bg-purple-500 hover:bg-purple-600 text-white p-2 rounded-full shadow-lg transition-colors"
-                                            aria-label="Open trading panel"
-                                        >
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                            </svg>
-                                        </button>
-                                    )}
-                            </div>
-
-
-
-                            {/* Chart Placeholder */}
-                            <div className="flex mt-12 space-y-4">
-                                <div className="h-[500px] bg-gray-50 rounded-lg flex items-center justify-center">
-                                    <span className="text-gray-400">Innovation brewing. Stay tuned.</span>
                                 </div>
                             </div>
+                        )}
+
+                        <div className="absolute top-24 -right-2 z-10">
+                            {isExpanded ? (
+                                <button
+                                    onClick={() => setIsExpanded(false)}
+                                    className="bg-purple-500 hover:bg-purple-600 text-white p-2 rounded-full shadow-lg transition-colors"
+                                    aria-label="Close trading panel"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => setIsExpanded(true)}
+                                    className="bg-purple-500 hover:bg-purple-600 text-white p-2 rounded-full shadow-lg transition-colors"
+                                    aria-label="Open trading panel"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Chart Placeholder */}
+                        <div className="w-full h-[500px] bg-gray-50 rounded-lg flex items-center justify-center">
+                            <span className="text-gray-400">Innovation brewing. Stay tuned.</span>
                         </div>
                     </div>
 
