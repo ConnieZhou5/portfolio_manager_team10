@@ -52,7 +52,15 @@ public class CashService {
      * @return Updated cash account
      */
     public CashAccount addCash(BigDecimal amount) {
-        CashAccount cashAccount = getOrCreateCashAccount();
+        Optional<CashAccount> existingAccount = cashAccountRepository.findFirstByOrderByIdAsc();
+        
+        CashAccount cashAccount;
+        if (existingAccount.isPresent()) {
+            cashAccount = existingAccount.get();
+        } else {
+            cashAccount = new CashAccount(BigDecimal.ZERO);
+        }
+        
         cashAccount.addCash(amount);
         return cashAccountRepository.save(cashAccount);
     }
@@ -64,7 +72,15 @@ public class CashService {
      * @return true if successful, false if insufficient funds
      */
     public boolean subtractCash(BigDecimal amount) {
-        CashAccount cashAccount = getOrCreateCashAccount();
+        Optional<CashAccount> existingAccount = cashAccountRepository.findFirstByOrderByIdAsc();
+        
+        CashAccount cashAccount;
+        if (existingAccount.isPresent()) {
+            cashAccount = existingAccount.get();
+        } else {
+            cashAccount = new CashAccount(BigDecimal.ZERO);
+        }
+        
         if (cashAccount.subtractCash(amount)) {
             cashAccountRepository.save(cashAccount);
             return true;
@@ -78,7 +94,13 @@ public class CashService {
      * @return The cash account
      */
     private CashAccount getOrCreateCashAccount() {
-        return cashAccountRepository.findFirstByOrderByIdAsc()
-                .orElseGet(() -> initializeCashAccount(BigDecimal.ZERO));
+        Optional<CashAccount> existingAccount = cashAccountRepository.findFirstByOrderByIdAsc();
+        
+        if (existingAccount.isPresent()) {
+            return existingAccount.get();
+        } else {
+            CashAccount cashAccount = new CashAccount(BigDecimal.ZERO);
+            return cashAccountRepository.save(cashAccount);
+        }
     }
 } 
