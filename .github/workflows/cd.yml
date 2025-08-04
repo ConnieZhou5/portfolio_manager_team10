@@ -21,6 +21,9 @@ jobs:
           curl -fsSL https://railway.app/install.sh | sh
           mkdir -p ~/.railway
           echo "${{ secrets.RAILWAY_API_TOKEN }}" > ~/.railway/token
+      
+      - name: Authenticate Railway CLI
+        run: railway login --apiKey ${{ secrets.RAILWAY_API_TOKEN }}
 
       - name: Deploy to Railway
         run: |
