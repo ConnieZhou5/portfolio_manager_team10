@@ -128,7 +128,7 @@ const StatsCard: React.FC<Properties> = ({ title, value, change, changeType, ico
 
     return (
         <div 
-            className={`bg-white rounded-lg p-4 shadow-sm border-l-4 ${getBorderColor()} hover:shadow-md transition-shadow duration-200 ${clickable ? 'cursor-pointer hover:bg-gray-50' : ''}`}
+            className={`relative overflow-hidden bg-white rounded-lg rounded-3xl p-4 shadow-sm border-l-4 ${getBorderColor()} hover:shadow-md transition-shadow duration-200 ${clickable ? 'cursor-pointer hover:bg-gray-50' : ''}`}
             onClick={handleClick}
         >
             <div className="flex items-center justify-between">
@@ -144,7 +144,7 @@ const StatsCard: React.FC<Properties> = ({ title, value, change, changeType, ico
                     </div>
                 </div>
                 {icon && (
-                    <div className="ml-4 flex-shrink-0">
+                    <div className="absolute top-4 right-4 flex-shrink-0">
                         <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
                             {icon}
                         </div>

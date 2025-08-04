@@ -282,7 +282,7 @@ const Buys = () => {
     };
 
     return (
-        <div className="bg-white rounded-2xl p-8 max-w-6xl mx-auto shadow-lg">
+        <div className="bg-white rounded-3xl p-8 max-w-6xl mx-auto shadow-lg">
             {/* Header Tabs */}
             <div className="border-b border-gray-200 mb-8">
                 <div className="flex space-x-8">
@@ -311,7 +311,7 @@ const Buys = () => {
                         </div>
                         <input
                             type="text"
-                            className="block w-full pl-10 pr-3 py-3 rounded-lg bg-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            className="rounded-3xl block w-full pl-10 pr-3 py-3 rounded-lg bg-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                             placeholder="Search stocks..."
                             value={symbol}
                             onChange={(e) => handleSymbolChange(e.target.value)}
@@ -395,7 +395,7 @@ const Buys = () => {
                             </div>
 
 
-                            <div className="absolute top-24 -right-2 z-10">
+                            <div className="absolute top-24 -right-4 z-10">
                                 {isExpanded ? (
                                     <button
                                         onClick={() => setIsExpanded(false)}
@@ -437,11 +437,11 @@ const Buys = () => {
                 {isExpanded && (
                     <div className="space-y-6 animate-in slide-in-from-right duration-600">
                         {/* Buy Form */}
-                        <div className="bg-purple-50 rounded-2xl p-10 space-y-6">
+                        <div className="bg-purple-50 rounded-3xl p-10 space-y-6">
                             {/* Symbol Input */}
                             <div className="flex">
                                 <label className="block text-md text-gray-700 mt-2">Symbol</label>
-                                <div className="ml-[59px] w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-medium">
+                                <div className="ml-[59px] w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-medium rounded-3xl">
                                     {stockInfo ? stockInfo.Symbol : 'Enter symbol'}
                                 </div>
                             </div>
@@ -451,7 +451,7 @@ const Buys = () => {
                                 <label className="block text-md text-gray-700 mt-2">Quantity</label>
                                 <input
                                     type="number"
-                                    className="text-center ml-[51px] w-full px-3 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    className="rounded-3xl text-center ml-[51px] w-full px-3 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                     value={quantity}
                                     onChange={(e) => {
                                         const value = e.target.value;
@@ -466,7 +466,7 @@ const Buys = () => {
                             {/* Order Type */}
                             <div className="flex">
                                 <label className="block text-md text-gray-700 mt-2">Order</label>
-                                <div className="ml-[70px] w-full px-3 pr-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-medium">
+                                <div className="rounded-3xl ml-[70px] w-full px-3 pr-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-medium">
                                     {orderType}
                                 </div>
                             </div>
@@ -474,7 +474,7 @@ const Buys = () => {
                             {/* Total */}
                             <div className="flex">
                                 <label className="block text-md text-gray-700 mt-2">Total~</label>
-                                <div className="ml-[66px] w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-medium">
+                                <div className="rounded-3xl ml-[66px] w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-medium">
                                     ${calculateTotal()}
                                 </div>
                             </div>
@@ -499,13 +499,10 @@ const Buys = () => {
                                 </div>
                             )}
 
-
-                        </div>
-
-                        {/* Action Buttons */}
+                            {/* Action Buttons */}
                         <div className="flex space-x-5 pt-4">
                             <button
-                                className={`flex-1 font-medium py-3 px-6 rounded-lg transition-colors ${!stockInfo || parseFloat(quantity) <= 0 || buyLoading || !marketOpen
+                                className={`rounded-3xl flex-1 font-medium py-3 px-6 rounded-lg transition-colors ${!stockInfo || parseFloat(quantity) <= 0 || buyLoading || !marketOpen
                                     ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
                                     : 'bg-purple-500 hover:bg-purple-600 text-white'
                                     } ${!marketOpen ? 'hover:cursor-not-allowed' : ''}`}
@@ -514,7 +511,7 @@ const Buys = () => {
                             >
                                 {buyLoading ? 'Processing...' : 'Buy'}
                             </button>
-                            <button className="flex-1 border border-gray-300 bg-white hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 rounded-lg transition-colors"
+                            <button className="rounded-3xl flex-1 border border-gray-300 bg-white hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 rounded-lg transition-colors"
                                 onClick={() => {
                                     setQuantity('');
                                     setInvalidqty(false);
@@ -525,8 +522,13 @@ const Buys = () => {
                                 </button>
                         </div>
 
+
+                        </div>
+
+                        
+
                         {/* Buy Transactions Log */}
-                        <div className="bg-gray-100 rounded-lg overflow-hidden shadow-sm">
+                        <div className="rounded-3xl bg-gray-100 rounded-lg overflow-hidden shadow-sm">
                             <h3 className="text-gray-600 pt-6 pb-2 pl-6 mb-1 font-medium text-left">Buy Transactions Log</h3>
                             <div className="max-h-96 overflow-y-auto">
                                 {loading ? (

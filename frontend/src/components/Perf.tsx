@@ -62,7 +62,7 @@ export default function Performance() {
 
     if (loading) {
         return (
-            <div className="bg-white rounded-2xl p-10 max-w-6xl mx-auto shadow-lg mb-20">
+            <div className="bg-white rounded-3xl p-10 max-w-6xl mx-auto shadow-lg mb-20">
                 <div className="mb-8">
                     <h1 className="text-2xl text-gray-500 mb-8 text-left">Profit and Loss</h1>
                 </div>
@@ -75,7 +75,7 @@ export default function Performance() {
 
     if (error) {
         return (
-            <div className="bg-white rounded-2xl p-10 max-w-6xl mx-auto shadow-lg mb-20">
+            <div className="bg-white rounded-3xl p-10 max-w-6xl mx-auto shadow-lg mb-20">
                 <div className="mb-8">
                     <h1 className="text-2xl text-gray-500 mb-8 text-left">Profit and Loss</h1>
                 </div>
@@ -88,7 +88,7 @@ export default function Performance() {
 
     if (!pnLData) {
         return (
-            <div className="bg-white rounded-2xl p-10 max-w-6xl mx-auto shadow-lg mb-20">
+            <div className="bg-white rounded-3xl p-10 max-w-6xl mx-auto shadow-lg mb-20">
                 <div className="mb-8">
                     <h1 className="text-2xl text-gray-500 mb-8 text-left">Profit and Loss</h1>
                 </div>
@@ -102,7 +102,7 @@ export default function Performance() {
     const yAxisDomain = calculateYAxisDomain(pnLData.monthlyData);
 
     return (
-        <div className="bg-white rounded-2xl p-10 max-w-6xl mx-auto shadow-lg mb-20">
+        <div className="bg-white rounded-3xl p-10 max-w-6xl mx-auto shadow-lg mb-20">
             <div className="mb-8">
                 <h1 className="text-2xl text-gray-500 mb-8 text-left">Profit and Loss</h1>
             </div>

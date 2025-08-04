@@ -97,7 +97,7 @@ const Asset = () => {
 
     if (loading) {
         return (
-            <div className="bg-white rounded-2xl p-10 max-w-6xl mx-auto shadow-lg mb-10">
+            <div className="bg-white rounded-3xl p-10 max-w-6xl mx-auto shadow-lg mb-10">
                 <h2 className="text-2xl text-gray-500 mb-8 text-left">Asset Class Allocation</h2>
                 <div className="flex items-center justify-center h-64">
                     <div className="text-gray-500">Loading asset data...</div>
@@ -108,7 +108,7 @@ const Asset = () => {
 
     if (error) {
         return (
-            <div className="bg-white rounded-2xl p-10 max-w-6xl mx-auto shadow-lg mb-10">
+            <div className="bg-white rounded-3xl p-10 max-w-6xl mx-auto shadow-lg mb-10">
                 <h2 className="text-2xl text-gray-500 mb-8 text-left">Asset Class Allocation</h2>
                 <div className="flex items-center justify-center h-64">
                     <div className="text-red-500">{error}</div>
@@ -118,7 +118,7 @@ const Asset = () => {
     }
 
     return (
-        <div className="bg-white rounded-2xl p-10 max-w-6xl mx-auto shadow-lg mb-10">
+        <div className="bg-white rounded-3xl p-10 max-w-6xl mx-auto shadow-lg mb-10">
             <h2 className="text-2xl text-gray-500 mb-8 text-left">Asset Class Allocation</h2>
 
             <div className="flex flex-col lg:flex-row gap-20">

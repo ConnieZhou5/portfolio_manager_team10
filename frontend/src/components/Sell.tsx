@@ -37,6 +37,7 @@ const Sells = () => {
     const [sellLoading, setSellLoading] = useState(false);
     const [sellError, setSellError] = useState<string | null>(null);
     const [sellSuccess, setSellSuccess] = useState<string | null>(null);
+    const [isExpanded, setIsExpanded] = useState(false);
     const { refreshTrigger, triggerRefresh } = usePortfolio();
 
     // Auto-dismiss success and error messages after 10 seconds
@@ -97,20 +98,20 @@ const Sells = () => {
             try {
                 setLoading(true);
                 setError(null);
-                
+
                 // Fetch both sell trades and portfolio items
                 const [trades, portfolio] = await Promise.all([
                     apiService.getTradesByType('SELL'),
                     apiService.getAllPortfolioItems()
                 ]);
-                
+
                 setSellTrades(trades);
                 setPortfolioItems(portfolio);
-                
+
                 // Convert portfolio items to display format
                 const convertedData = await convertPortfolioToDisplayData(portfolio);
                 setPortfolioData(convertedData);
-                
+
             } catch (err) {
                 setError('Failed to load data');
                 console.error('Error fetching data:', err);
@@ -130,18 +131,18 @@ const Sells = () => {
             // Get current stock prices for all portfolio items
             const symbols = portfolio.map(item => item.ticker);
             const stockData = await apiService.getStockData(symbols);
-            
+
             return portfolio.map(item => {
                 const currentStock = stockData.find(stock => stock.symbol === item.ticker);
                 const currentPrice = currentStock?.price || item.buyPrice;
                 const previousClose = currentStock?.previousClose || item.buyPrice;
-                
+
                 const priceChange = currentPrice - previousClose;
                 const priceChangePercent = previousClose > 0 ? (priceChange / previousClose) * 100 : 0;
                 const totalGain = (currentPrice - item.buyPrice) * item.quantity;
                 const totalGainPercent = item.buyPrice > 0 ? ((currentPrice - item.buyPrice) / item.buyPrice) * 100 : 0;
                 const currentValue = currentPrice * item.quantity;
-                
+
                 return {
                     symbol: item.ticker,
                     lastPrice: currentPrice,
@@ -259,20 +260,20 @@ const Sells = () => {
                 setSellSuccess(`Successfully sold ${qty} shares of ${symbol} for $${response.totalProceeds?.toFixed(2)}`);
                 setQuantity('');
                 setSymbol('');
-                
+
                 // Refresh portfolio data and trades
                 const [updatedTrades, updatedPortfolio] = await Promise.all([
                     apiService.getTradesByType('SELL'),
                     apiService.getAllPortfolioItems()
                 ]);
-                
+
                 setSellTrades(updatedTrades);
                 setPortfolioItems(updatedPortfolio);
-                
+
                 // Convert updated portfolio to display format
                 const convertedData = await convertPortfolioToDisplayData(updatedPortfolio);
                 setPortfolioData(convertedData);
-                
+
                 // Trigger portfolio refresh to update Stats and Assets components
                 triggerRefresh();
             } else {
@@ -287,7 +288,7 @@ const Sells = () => {
     };
 
     return (
-        <div className="bg-white rounded-2xl p-8 max-w-6xl mx-auto shadow-lg">
+        <div className="bg-white rounded-3xl p-8 max-w-6xl mx-auto shadow-lg">
             {/* Header Tabs */}
             <div className="border-b border-gray-200 mb-8">
                 <div className="flex space-x-8">
@@ -304,9 +305,9 @@ const Sells = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Left Column - Stock Info */}
-                <div className="lg:col-span-2">
+            <div className={`grid gap-8 transition-all duration-300 ${isExpanded ? 'grid-cols-1 lg:grid-cols-3' : 'grid-cols-1'}`}>
+            {/* Left Column - Stock Info */}
+            <div className={`transition-all duration-300 ${isExpanded ? 'lg:col-span-2' : 'col-span-1'}`}>
                     {/* Search Bar */}
                     <div className="relative mb-6">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center">
@@ -316,21 +317,27 @@ const Sells = () => {
                         </div>
                         <input
                             type="text"
-                            className="block w-full pl-10 pr-3 py-3 rounded-lg bg-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                            className="rounded-3xl block w-full pl-10 pr-3 py-3 rounded-lg bg-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                             placeholder="Search stocks..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
-{/* 
-                    <div className={`ml-[587px] mb-2 flex items-center space-x-2 px-3 py-1.5 rounded-full border ${getMarketStatusStyles().containerClass}`}>
-                        <div className={`w-2 h-2 rounded-full ${getMarketStatusStyles().dotClass}`}></div>
-                        <span className={`text-sm font-medium ${getMarketStatusStyles().textClass}`}>
-                            {marketOpen ? 'Market Open' : 'Market Closed'}
-                        </span>
-                    </div> */}
+                    
+                    <div className={`flex justify-end mb-4`}>
+    <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-full border ${getMarketStatusStyles().containerClass}`}>
+        <div className={`w-2 h-2 rounded-full ${getMarketStatusStyles().dotClass}`}></div>
+        <span className={`text-sm font-medium ${getMarketStatusStyles().textClass}`}>
+            {marketOpen ? 'Market Open' : 'Market Closed'}
+        </span>
+    </div>
+</div>
+
+                    
 
                     {/* Table Section */}
+
+                    <div className="relative">
                     <div className="col-span-2 bg-white rounded-2xl p-6 shadow-md text-xs">
                         {loading ? (
                             <div className="flex items-center justify-center h-32">
@@ -345,162 +352,191 @@ const Sells = () => {
                                 <div className="text-gray-500">No portfolio holdings found</div>
                             </div>
                         ) : (
-                            <PivotTable data={portfolioData} searchText={searchQuery} />
-                        )}
+                                        <PivotTable data={portfolioData} searchText={searchQuery} />
+                                    )}
                     </div>
 
+                    <div className="absolute top-44 -right-4 z-10">
+                        {isExpanded ? (
+                            <button
+                                onClick={() => setIsExpanded(false)}
+                                className="bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-full shadow-lg transition-colors"
+                                aria-label="Close trading panel"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => setIsExpanded(true)}
+                                className="bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-full shadow-lg transition-colors"
+                                aria-label="Open trading panel"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </button>
+                        )}
+                    </div>
+                    </div>
                 </div>
 
                 {/* Right Column - Sell Form and Transactions (Sticky) */}
-                <div className="space-y-6">
-                    {/* Sell Form */}
+                {isExpanded && (
+                    <div className="space-y-6 animate-in slide-in-from-right duration-600">
 
-                    <div className="bg-orange-50 rounded-2xl p-10 space-y-6">
+                        {/* Sell Form */}
 
-                        {/* Error/Success Messages */}
-                        {sellError && (
-                            <div className="bg-red-100 text-red-700 text-sm p-2 rounded-lg">
-                                ❌ {sellError}
+                        <div className="bg-orange-50 rounded-3xl p-10 space-y-6">
+
+                            
+
+                            {/* Symbol Input */}
+                            <div className="flex">
+                                <label className="block text-md text-gray-700 mt-2">Symbol</label>
+                                <input
+                                    type="text"
+                                    className="rounded-3xl text-center ml-[59px] w-full px-3 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                    value={symbol}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        const stock = portfolioData.find(item => item.symbol === value);
+
+                                        if (stock && stock.quantity > 0) {
+                                            setSymbol(value);
+                                            setStockError(false);
+                                        } else {
+                                            setSymbol(value);
+                                            setStockError(true);
+                                        }
+                                    }}
+                                />
                             </div>
-                        )}
 
-                        {sellSuccess && (
-                            <div className="bg-green-100 text-green-700 text-sm p-2 rounded-lg">
-                                ✅ {sellSuccess}
+                            {/* Quantity Input */}
+                            <div className="flex">
+                                <label className="block text-md text-gray-700 mt-2">Quantity</label>
+                                <input
+                                    type="number"
+                                    className="rounded-3xl text-center ml-[51px] w-full px-3 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                    value={quantity}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        if (value === '' || (Number(value) >= 0 && Number.isInteger(Number(value)))) {
+                                            setQuantity(value);
+                                            setQtyError(false);
+                                        }
+                                    }}
+                                    placeholder="0"
+                                />
                             </div>
-                        )}
 
-                        {invalidqty && (
-                            <div className="bg-red-100 text-red-700 text-sm p-2 rounded-lg">
-                                ❌ Not Valid Quantity
-                            </div>
-                        )}
-
-                        {invalidstock && (
-                            <div className="bg-red-100 text-red-700 text-sm p-2 rounded-lg">
-                                ❌ Not Valid Stock
-                            </div>
-                        )}
-
-                        {/* Market Status Indicator */}
-                        {!marketOpen && (
-                            <div className="bg-red-50 border border-red-200 rounded-lg p-2 text-center">
-                                <span className="text-red-700 text-sm font-medium">Market Closed - Cannot Sell</span>
-                            </div>
-                        )}
-
-                        {/* Symbol Input */}
-                        <div className="flex">
-                            <label className="block text-md text-gray-700 mt-2">Symbol</label>
-                            <input
-                                type="text"
-                                className="text-center ml-[59px] w-full px-3 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                                value={symbol}
-                                onChange={(e) => {
-                                    const value = e.target.value;
-                                    const stock = portfolioData.find(item => item.symbol === value);
-
-                                    if (stock && stock.quantity > 0) {
-                                        setSymbol(value);
-                                        setStockError(false);
-                                    } else {
-                                        setSymbol(value);
-                                        setStockError(true);
-                                    }
-                                }}
-                            />
-                        </div>
-
-                        {/* Quantity Input */}
-                        <div className="flex">
-                            <label className="block text-md text-gray-700 mt-2">Quantity</label>
-                            <input
-                                type="number"
-                                className="text-center ml-[51px] w-full px-3 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                                value={quantity}
-                                onChange={(e) => {
-                                    const value = e.target.value;
-                                    if (value === '' || (Number(value) >= 0 && Number.isInteger(Number(value)))) {
-                                        setQuantity(value);
-                                        setQtyError(false);
-                                    }
-                                }}
-                                placeholder="0"
-                            />
-                        </div>
-
-                        {/* Order Type */}
-                        <div className="flex">
-                            <label className="block text-md text-gray-700 mt-2">Order</label>
-                            <div className="ml-[70px] w-full px-3 pr-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-medium">
-                                {orderType}
-                            </div>
-                        </div>
-
-                        {/* Total */}
-                        <div className="flex">
-                            <label className="block text-md text-gray-700 mt-2">Total~</label>
-                            <div className="ml-[66px] w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-medium">
-                                ${calculateTotal()}
-                            </div>
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="flex space-x-5 pt-4">
-                            <button
-                                className={`flex-1 font-medium py-3 px-6 rounded-lg transition-colors ${
-                                    !symbol || parseFloat(quantity) <= 0 || !marketOpen || sellLoading
-                                        ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                                        : 'bg-orange-500 hover:bg-orange-600 text-white'
-                                } ${!marketOpen ? 'hover:cursor-not-allowed' : ''}`}
-                                disabled={!symbol || parseFloat(quantity) <= 0 || !marketOpen || sellLoading}
-                                onClick={handleSellTransaction}
-                            >
-                                {sellLoading ? 'Processing...' : 'Sell'}
-                            </button>
-                            <button className="flex-1 border border-gray-300 bg-white hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 rounded-lg transition-colors"
-                                onClick={() => {
-                                    setQuantity('');
-                                    setSymbol('');
-                                    setQtyError(false);
-                                    setStockError(false);
-                                    setSellError(null);
-                                    setSellSuccess(null);
-                                }}>
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Sell Transactions Log */}
-                    <div className="bg-gray-100 rounded-lg overflow-hidden shadow-sm">
-                        <h3 className="text-gray-600 pt-6 pb-2 pl-6 mb-1 font-medium text-left">Sell Transactions Log</h3>
-                        <div className="max-h-96 overflow-y-auto">
-                            {loading ? (
-                                <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left">
-                                    Loading sell transactions...
+                            {/* Order Type */}
+                            <div className="flex">
+                                <label className="block text-md text-gray-700 mt-2">Order</label>
+                                <div className="rounded-3xl ml-[70px] w-full px-3 pr-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-medium">
+                                    {orderType}
                                 </div>
-                            ) : error ? (
-                                <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-red-500 text-left">
-                                    {error}
+                            </div>
+
+                            {/* Total */}
+                            <div className="flex">
+                                <label className="block text-md text-gray-700 mt-2">Total~</label>
+                                <div className="rounded-3xl ml-[66px] w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-medium">
+                                    ${calculateTotal()}
                                 </div>
-                            ) : sellTrades.length === 0 ? (
-                                <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left">
-                                    No sell transactions found
+                            </div>
+
+                            {/* Error/Success Messages */}
+                            {sellError && (
+                                <div className="bg-red-100 text-red-700 text-sm p-2 rounded-lg">
+                                    ❌ {sellError}
                                 </div>
-                            ) : (
-                                sellTrades.map((trade, index) => (
-                                    <div key={trade.id} className={`pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left ${index < sellTrades.length - 1 ? 'border-b border-gray-100' : ''}`}>
-                                        Sold {trade.quantity} {trade.ticker} @ ${trade.price.toFixed(2)}
-                                        <br></br>
-                                        Total: ${trade.totalValue.toFixed(2)}
-                                        <span className="text-sm text-gray-500 block text-right">{formatDate(trade.tradeDate)}</span>
-                                    </div>
-                                ))
                             )}
+
+                            {sellSuccess && (
+                                <div className="bg-green-100 text-green-700 text-sm p-2 rounded-lg">
+                                    ✅ {sellSuccess}
+                                </div>
+                            )}
+
+                            {invalidqty && (
+                                <div className="bg-red-100 text-red-700 text-sm p-2 rounded-lg">
+                                    ❌ Not Valid Quantity
+                                </div>
+                            )}
+
+                            {invalidstock && (
+                                <div className="bg-red-100 text-red-700 text-sm p-2 rounded-lg">
+                                    ❌ Not Valid Stock
+                                </div>
+                            )}
+
+                            {/* Market Status Indicator */}
+                            {!marketOpen && (
+                                <div className="bg-red-50 border border-red-200 rounded-lg p-2 text-center">
+                                    <span className="text-red-700 text-sm font-medium">Market Closed - Cannot Sell</span>
+                                </div>
+                            )}
+
+                            {/* Action Buttons */}
+                            <div className="flex space-x-5 pt-4">
+                                <button
+                                    className={`rounded-3xl flex-1 font-medium py-3 px-6 rounded-lg transition-colors ${!symbol || parseFloat(quantity) <= 0 || !marketOpen || sellLoading
+                                            ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                                            : 'bg-orange-500 hover:bg-orange-600 text-white'
+                                        } ${!marketOpen ? 'hover:cursor-not-allowed' : ''}`}
+                                    disabled={!symbol || parseFloat(quantity) <= 0 || !marketOpen || sellLoading}
+                                    onClick={handleSellTransaction}
+                                >
+                                    {sellLoading ? 'Processing...' : 'Sell'}
+                                </button>
+                                <button className="rounded-3xl flex-1 border border-gray-300 bg-white hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 rounded-lg transition-colors"
+                                    onClick={() => {
+                                        setQuantity('');
+                                        setSymbol('');
+                                        setQtyError(false);
+                                        setStockError(false);
+                                        setSellError(null);
+                                        setSellSuccess(null);
+                                    }}>
+                                    Cancel
+                            </button>
+                            </div>
+                        </div>
+
+                        {/* Sell Transactions Log */}
+                        <div className="bg-gray-100 rounded-lg overflow-hidden shadow-sm rounded-3xl">
+                            <h3 className="text-gray-600 pt-6 pb-2 pl-6 mb-1 font-medium text-left">Sell Transactions Log</h3>
+                            <div className="max-h-96 overflow-y-auto">
+                                {loading ? (
+                                    <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left">
+                                        Loading sell transactions...
+                                    </div>
+                                ) : error ? (
+                                    <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-red-500 text-left">
+                                        {error}
+                                    </div>
+                                ) : sellTrades.length === 0 ? (
+                                    <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left">
+                                        No sell transactions found
+                                    </div>
+                                ) : (
+                                                sellTrades.map((trade, index) => (
+                                                    <div key={trade.id} className={`pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left ${index < sellTrades.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                                                        Sold {trade.quantity} {trade.ticker} @ ${trade.price.toFixed(2)}
+                                                        <br></br>
+                                        Total: ${trade.totalValue.toFixed(2)}
+                                                        <span className="text-sm text-gray-500 block text-right">{formatDate(trade.tradeDate)}</span>
+                                                    </div>
+                                                ))
+                                            )}
+                            </div>
                         </div>
                     </div>
-                </div>
+
+                )}
             </div>
         </div>
     );
