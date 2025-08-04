@@ -30,4 +30,4 @@ jobs:
       - name: Build & run tests
         run: |
           cd backend
-          mvn clean verify
+          mvn clean verify -Ptest
