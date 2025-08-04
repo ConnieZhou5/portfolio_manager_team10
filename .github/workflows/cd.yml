@@ -11,6 +11,9 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -21,9 +24,6 @@ jobs:
           curl -fsSL https://railway.app/install.sh | sh
           mkdir -p ~/.railway
           echo "${{ secrets.RAILWAY_API_TOKEN }}" > ~/.railway/token
-      
-      - name: Authenticate Railway CLI
-        run: railway login --apiKey ${{ secrets.RAILWAY_API_TOKEN }}
 
       - name: Deploy to Railway
         run: |
