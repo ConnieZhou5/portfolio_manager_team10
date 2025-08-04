@@ -1,0 +1,58 @@
+# Maven build artifacts
+target/
+*.jar
+*.war
+*.ear
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Git metadata
+.git/
+.gitignore
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Node.js (if any frontend files are accidentally included)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker files
+Dockerfile*
+.dockerignore
+
+# Documentation
+README.md
+*.md
+
+# Test files
+src/test/
+
+# Application properties with sensitive data
+src/main/resources/application-local.properties
+src/main/resources/application-dev.properties 
