@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom';
 import { apiService, TradeHistory, StockData, BuyRequest, CashBalance } from '../services/api';
 import { usePortfolio } from '../context/PortfolioContext';
 import { isMarketOpen } from '../utils/marketStatus';
+import getAnalysis from './aiAnalysisService';
+// import AIInsightsCard from "./AIInsightsCard"
+
 
 type Market = 'Market Open' | 'Market Closed'
 
@@ -38,6 +41,7 @@ const Buys = () => {
     const [marketOpen, setMarketOpen] = useState(true);
     const [isExpanded, setIsExpanded] = useState(true);
     const { triggerRefresh } = usePortfolio();
+    const [analysis, setAnalysis] = useState<any>(null);
 
     // Auto-dismiss success and error messages after 10 seconds
     useEffect(() => {
@@ -72,6 +76,18 @@ const Buys = () => {
 
         return () => clearInterval(interval);
     }, []);
+
+    const fetchAnalysis = async (ticker: string) => {
+        if (!ticker.trim()) return;
+        try {
+            const result = await getAnalysis(ticker.trim().toUpperCase());
+            setAnalysis(result);
+        } catch (err) {
+            console.error('Error fetching analysis:', err);
+            setAnalysis(null);
+        }
+    };
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -306,7 +322,15 @@ const Buys = () => {
                             className="rounded-3xl block w-full pl-10 pr-3 py-3 rounded-lg bg-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                             placeholder="Search stocks..."
                             value={symbol}
-                            onChange={(e) => handleSymbolChange(e.target.value)}
+                            onChange={(e) => setSymbol(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    const cleanSymbol = symbol.trim().toUpperCase();
+                                    searchStock(cleanSymbol);
+                                    fetchAnalysis(cleanSymbol);
+                                }
+                            }}
+
                         />
                         {searchLoading && (
                             <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
@@ -342,21 +366,21 @@ const Buys = () => {
                             <p className="text-red-800">{searchError}</p>
                         </div>
                     ) : (
-                                <div className="mb-6 space-y-4">
-                                    <div className={`flex justify-end mb-4`}>
-                                        <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-full border ${getMarketStatusStyles().containerClass}`}>
-                                            <div className={`w-2 h-2 rounded-full ${getMarketStatusStyles().dotClass}`}></div>
-                                            <span className={`text-sm font-medium ${getMarketStatusStyles().textClass}`}>
-                                                {marketOpen ? 'Market Open' : 'Market Closed'}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                                        <p className="text-gray-600">Enter a stock symbol to search for real-time data</p>
-                                    </div>
+                        <div className="mb-6 space-y-4">
+                            <div className={`flex justify-end mb-4`}>
+                                <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-full border ${getMarketStatusStyles().containerClass}`}>
+                                    <div className={`w-2 h-2 rounded-full ${getMarketStatusStyles().dotClass}`}></div>
+                                    <span className={`text-sm font-medium ${getMarketStatusStyles().textClass}`}>
+                                        {marketOpen ? 'Market Open' : 'Market Closed'}
+                                    </span>
                                 </div>
-                            )}
+                            </div>
+
+                            <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                                <p className="text-gray-600">Enter a stock symbol to search for real-time data</p>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Stock Details */}
                     <div className="relative">
@@ -402,21 +426,34 @@ const Buys = () => {
                                     </svg>
                                 </button>
                             ) : (
-                                    <button
-                                        onClick={() => setIsExpanded(true)}
-                                        className="bg-purple-500 hover:bg-purple-600 text-white p-2 rounded-full shadow-lg transition-colors"
-                                        aria-label="Open trading panel"
-                                    >
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                        </svg>
-                                    </button>
-                                )}
+                                <button
+                                    onClick={() => setIsExpanded(true)}
+                                    className="bg-purple-500 hover:bg-purple-600 text-white p-2 rounded-full shadow-lg transition-colors"
+                                    aria-label="Open trading panel"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                </button>
+                            )}
                         </div>
 
                         {/* Chart Placeholder */}
                         <div className="w-full h-[500px] bg-gray-50 rounded-lg flex items-center justify-center">
-                            <span className="text-gray-400">Innovation brewing. Stay tuned.</span>
+                            {/* This div will be replaced with the AI analysis */}
+                            {analysis ? (
+                                <div className="ai-insights">
+                                    <div className="recommendation">
+                                        <h3>Recommendation: {analysis.generalAnalysis}</h3>
+                                        <div>Analyst Rating: Positive</div>
+                                        <div>News: Mixed</div>
+                                        <div>Social Media: Avoid</div>
+                                        <div>Technical Analysis: Bullish</div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <p>Loading analysis...</p>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -536,15 +573,15 @@ const Buys = () => {
                                         No buy transactions found
                                     </div>
                                 ) : (
-                                                buyTrades.map((trade, index) => (
-                                                    <div key={trade.id} className={`pl-6 pr-6 pt-2 pb-2 bg-white text-sm text-gray-500 text-left ${index < buyTrades.length - 1 ? 'border-b border-gray-100' : ''}`}>
-                                                        Bought {trade.quantity} {trade.ticker} @ ${trade.price.toFixed(2)}
-                                                        <br />
-                                           Total: ${trade.totalValue.toFixed(2)}
-                                                        <span className="text-xs text-gray-500 block text-right">{formatDate(trade.tradeDate)}</span>
-                                                    </div>
-                                                ))
-                                            )}
+                                    buyTrades.map((trade, index) => (
+                                        <div key={trade.id} className={`pl-6 pr-6 pt-2 pb-2 bg-white text-sm text-gray-500 text-left ${index < buyTrades.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                                            Bought {trade.quantity} {trade.ticker} @ ${trade.price.toFixed(2)}
+                                            <br />
+                                            Total: ${trade.totalValue.toFixed(2)}
+                                            <span className="text-xs text-gray-500 block text-right">{formatDate(trade.tradeDate)}</span>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         </div>
                     </div>

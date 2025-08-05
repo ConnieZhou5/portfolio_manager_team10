@@ -106,15 +106,15 @@ const PivotTable = ({ data, searchText }) => {
                   onClick={() => toggleSymbol(row.symbol)}
                 >
                   <td className="px-2 py-2 font-semibold">{row.symbol}</td>
-                  <td className="px-2 -py2">{row.lastPrice}</td>
-                  <td className="px-2 -py2">{row.change}</td>
-                  <td className="px-2 -py2">{row.changePercent}</td>
-                  <td className="px-2 -py2">{row.quantity}</td>
-                  <td className="px-2 -py2">{row.pricePaid}</td>
-                  <td className="px-2 -py2">{row.daysGain}</td>
-                  <td className="px-2 -py2">{row.totalGain}</td>
-                  <td className="px-2 -py2">{row.totalGainPercent}</td>
-                  <td className="px-2 -py2">{row.value}</td>
+                  <td className="px-2 py-2">{row.lastPrice}</td>
+                  <td className="px-2 py-2">{row.change}</td>
+                  <td className="px-2 py-2">{row.changePercent}</td>
+                  <td className="px-2 py-2">{row.quantity}</td>
+                  <td className="px-2 py-2">{row.pricePaid}</td>
+                  <td className="px-2 py-2">{row.daysGain}</td>
+                  <td className="px-2 py-2">{row.totalGain}</td>
+                  <td className="px-2 py-2">{row.totalGainPercent}</td>
+                  <td className="px-2 py-2">{row.value}</td>
                 </tr>
 
                 {isExpanded &&
@@ -140,13 +140,13 @@ const PivotTable = ({ data, searchText }) => {
           })}
 
           {/* ✅ Global totals row */}
-          <tr className="font-semibold bg-black-100 text-black-800 border-t">
-            <td className="" colSpan={5}>Totals</td>
-            <td className="">{globalTotals.pricePaid}</td>
-            <td className="">{globalTotals.daysGain}</td>
-            <td className="">{globalTotals.totalGain}</td>
-            <td className="">{globalTotals.totalGainPercent}</td>
-            <td className="">{globalTotals.value}</td>
+          <tr className="px-2 py-2 font-semibold bg-black-100 text-black-800 border-t">
+            <td className="px-2 py-2" colSpan={5}>Totals</td>
+            <td className="px-2 py-2">{globalTotals.pricePaid}</td>
+            <td className="px-2 py-2">{globalTotals.daysGain}</td>
+            <td className="px-2 py-2">{globalTotals.totalGain}</td>
+            <td className="px-2 py-2">{globalTotals.totalGainPercent}</td>
+            <td className="px-2 py-2">{globalTotals.value}</td>
           </tr>
         </tbody>
       </table>
