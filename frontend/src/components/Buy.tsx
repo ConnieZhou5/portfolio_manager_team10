@@ -185,6 +185,7 @@ const Buys = () => {
         } else {
             setStockInfo(null);
             setSearchError(null);
+            setAnalysis(null);
         }
     };
 

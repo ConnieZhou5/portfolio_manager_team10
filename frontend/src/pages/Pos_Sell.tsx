@@ -11,7 +11,7 @@ function Sell() {
     return (
         <div className="bg-gradient-to-br from-purple-50 via-indigo-50 to-pink-50 min-h-screen">
 
-            <div className="pt-6 pb-4 sticky top-0 z-10 backdrop-blur-md bg-white/70 border-b border-white/20 shadow-lg">
+            <div className="pt-6 pb-4 sticky top-0 z-50 backdrop-blur-md bg-white/70 border-b border-white/20 shadow-lg">
 
                 <h1 className="text-4xl text-gray-700 mb-5 -ml-[950px] font-light tracking-wide">My Portfolio</h1>
                 
