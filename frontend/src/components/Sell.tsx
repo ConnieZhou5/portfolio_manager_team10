@@ -483,7 +483,7 @@ const Sells = () => {
                             {/* Action Buttons */}
                             <div className="flex space-x-5 pt-4">
                                 <button
-                                    className={`rounded-3xl flex-1 font-medium py-3 px-6 rounded-lg transition-colors ${!symbol || parseFloat(quantity) <= 0 || !marketOpen || sellLoading
+                                    className={`rounded-3xl flex-1 font-medium py-3 px-6 transition-colors ${!symbol || parseFloat(quantity) <= 0 || !marketOpen || sellLoading
                                         ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
                                         : 'bg-orange-500 hover:bg-orange-600 text-white'
                                         } ${!marketOpen ? 'hover:cursor-not-allowed' : ''}`}
@@ -492,7 +492,7 @@ const Sells = () => {
                                 >
                                     {sellLoading ? 'Processing...' : 'Sell'}
                                 </button>
-                                <button className="rounded-3xl flex-1 border border-gray-300 bg-white hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 rounded-lg transition-colors"
+                                <button className="rounded-3xl flex-1 border border-gray-300 bg-white hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 transition-colors"
                                     onClick={() => {
                                         setQuantity('');
                                         setSymbol('');

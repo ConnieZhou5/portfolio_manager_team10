@@ -116,7 +116,7 @@ const Equity = () => {
 
             <div className="flex flex-col lg:flex-row gap-20 items-start">
                 {/* Donut Chart */}
-                <div className="relative ml-40 mt-10">
+                <div className="relative ml-40">
                     <svg width="240" height="240" className="transform -rotate-90">
                         {/* Background circle */}
                         <circle

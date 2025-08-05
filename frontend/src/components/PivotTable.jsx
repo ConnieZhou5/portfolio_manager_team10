@@ -35,6 +35,24 @@ const groupAndAverageBySymbol = (data) => {
   });
 };
 
+const formatCurrency = (value) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2
+  }).format(value);
+};
+
+const formatPercentage = (value) => {
+  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
+};
+
+const getValueColor = (value) => {
+  if (value > 0) return 'text-green-600';
+  if (value < 0) return 'text-red-600';
+  return 'text-gray-700';
+};
+
 const PivotTable = ({ data, searchText }) => {
   const [expandedSymbols, setExpandedSymbols] = useState(new Set());
 
@@ -80,76 +98,161 @@ const PivotTable = ({ data, searchText }) => {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-xs text-left">
-        <thead className="text-gray-700 border-b align-center h-8">
-          <tr>
-            <th className="px-2 py-2">Symbol</th>
-            <th className="px-2 py-2">Last Price $</th>
-            <th className="px-2 py-2">Change $</th>
-            <th className="px-2 py-2">Change %</th>
-            <th className="px-2 py-2">Qty #</th>
-            <th className="px-2 py-2">Price Paid $</th>
-            <th className="px-2 py-2">Day's Gain $</th>
-            <th className="px-2 py-2">Total Gain $</th>
-            <th className="px-2 py-2">Total Gain %</th>
-            <th className="px-2 py-2">Value $</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredGroupedData.map((row, idx) => {
-            const isExpanded = expandedSymbols.has(row.symbol);
-            return (
-              <React.Fragment key={idx}>
-                <tr
-                  className="border-b cursor-pointer hover:bg-gray-200"
-                  onClick={() => toggleSymbol(row.symbol)}
-                >
-                  <td className="px-2 py-2 font-semibold">{row.symbol}</td>
-                  <td className="px-2 py-2">{row.lastPrice}</td>
-                  <td className="px-2 py-2">{row.change}</td>
-                  <td className="px-2 py-2">{row.changePercent}</td>
-                  <td className="px-2 py-2">{row.quantity}</td>
-                  <td className="px-2 py-2">{row.pricePaid}</td>
-                  <td className="px-2 py-2">{row.daysGain}</td>
-                  <td className="px-2 py-2">{row.totalGain}</td>
-                  <td className="px-2 py-2">{row.totalGainPercent}</td>
-                  <td className="px-2 py-2">{row.value}</td>
-                </tr>
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th className="px-4 py-3 text-left font-semibold text-gray-700 min-w-[120px]">
+                Symbol
+              </th>
+              <th className="px-4 py-3 text-right font-semibold text-gray-700 min-w-[100px]">
+                Last Price$
+              </th>
+              <th className="px-4 py-3 text-right font-semibold text-gray-700 min-w-[90px]">
+                Change$
+              </th>
+              <th className="px-4 py-3 text-right font-semibold text-gray-700 min-w-[90px]">
+                Change%
+              </th>
+              <th className="px-4 py-3 text-right font-semibold text-gray-700 min-w-[80px]">
+                Qty
+              </th>
+              <th className="px-4 py-3 text-right font-semibold text-gray-700 min-w-[100px]">
+                Price Paid$
+              </th>
+              <th className="px-4 py-3 text-right font-semibold text-gray-700 min-w-[100px]">
+                Day's Gain$
+              </th>
+              <th className="px-4 py-3 text-right font-semibold text-gray-700 min-w-[100px]">
+                Total Gain$
+              </th>
+              <th className="px-4 py-3 text-right font-semibold text-gray-700 min-w-[100px]">
+                Total Gain%
+              </th>
+              <th className="px-4 py-3 text-right font-semibold text-gray-700 min-w-[120px]">
+                Value$
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {filteredGroupedData.map((row, idx) => {
+              const isExpanded = expandedSymbols.has(row.symbol);
 
-                {isExpanded &&
-                  rawBySymbol[row.symbol]?.map((rawRow, subIdx) => (
-                    <tr key={`${idx}-${subIdx}`} className="border-b bg-white text-gray-600">
-                      <td className="px-2 py-2 text-xs text-gray-500">{rawRow.date}</td>
-                      <td className="px-2 py-2">{rawRow.lastPrice}</td>
-                      <td className="px-2 py-2">{rawRow.change}</td>
-                      <td className="px-2 py-2">{rawRow.changePercent}</td>
-                      <td className="px-2 py-2">{rawRow.quantity}</td>
-                      <td className="px-2 py-2">{rawRow.pricePaid}</td>
-                      <td className="px-2 py-2">{rawRow.daysGain}</td>
-                      <td className="px-2 py-2">{rawRow.totalGain}</td>
-                      <td className="px-2 py-2">{rawRow.totalGainPercent}</td>
-                      <td className="px-2 py-2">{rawRow.value}</td>
-                      {/* Date column (raw row only) */}
-                      
-                    </tr>
-                  ))}
+              return (
+                <React.Fragment key={idx}>
+                  <tr
+                    className="border-b cursor-pointer hover:bg-gray-200"
+                    onClick={() => toggleSymbol(row.symbol)}
+                  >
+                    <td className="px-4 py-3">
+                      <div className="flex items-center space-x-2">
 
-              </React.Fragment>
-            );
-          })}
+                        <span className="font-semibold text-gray-900">{row.symbol}</span>
 
-          {/* ✅ Global totals row */}
-          <tr className="px-2 py-2 font-semibold bg-black-100 text-black-800 border-t">
-            <td className="px-2 py-2" colSpan={5}>Totals</td>
-            <td className="px-2 py-2">{globalTotals.pricePaid}</td>
-            <td className="px-2 py-2">{globalTotals.daysGain}</td>
-            <td className="px-2 py-2">{globalTotals.totalGain}</td>
-            <td className="px-2 py-2">{globalTotals.totalGainPercent}</td>
-            <td className="px-2 py-2">{globalTotals.value}</td>
-          </tr>
-        </tbody>
-      </table>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-right font-medium text-gray-900">
+                      {formatCurrency(row.lastPrice || 0)}
+                    </td>
+                    <td className={`px-4 py-3 text-right font-medium ${getValueColor(row.change || 0)}`}>
+
+                      <span>{formatCurrency(row.change || 0)}</span>
+
+                    </td>
+                    <td className={`px-4 py-3 text-right font-medium ${getValueColor(row.changePercent || 0)}`}>
+                      {formatPercentage(row.changePercent || 0)}
+                    </td>
+                    <td className="px-4 py-3 text-right text-gray-700">
+                      {(row.quantity || 0).toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 text-right text-gray-700">
+                      {formatCurrency(row.pricePaid || 0)}
+                    </td>
+                    <td className={`px-4 py-3 text-right font-medium ${getValueColor(row.daysGain || 0)}`}>
+                      {formatCurrency(row.daysGain || 0)}
+                    </td>
+                    <td className={`px-4 py-3 text-right font-medium ${getValueColor(row.totalGain || 0)}`}>
+                      {formatCurrency(row.totalGain || 0)}
+                    </td>
+                    <td className={`px-4 py-3 text-right font-medium ${getValueColor(row.totalGainPercent || 0)}`}>
+                      {formatPercentage(row.totalGainPercent || 0)}
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold text-gray-900">
+                      {formatCurrency(row.value || 0)}
+                    </td>
+                  </tr>
+
+                  {isExpanded &&
+                    rawBySymbol[row.symbol]?.map((rawRow, subIdx) => (
+                      <tr key={`${idx}-${subIdx}`} className="border-b bg-gray-100 text-gray-600">
+                        <td className="pl-4 pr-4 py-2">
+                          <div className="text-xs text-gray-500 text-left">
+                            {rawRow.date || `Position ${subIdx + 1}`}
+                          </div>
+                        </td>
+                        <td className="px-4 py-2 text-right text-sm text-gray-700">
+                          {formatCurrency(rawRow.lastPrice || 0)}
+                        </td>
+                        <td className={`px-4 py-2 text-right text-sm ${getValueColor(rawRow.change || 0)}`}>
+                          {formatCurrency(rawRow.change || 0)}
+                        </td>
+                        <td className={`px-4 py-2 text-right text-sm ${getValueColor(rawRow.changePercent || 0)}`}>
+                          {formatPercentage(rawRow.changePercent || 0)}
+                        </td>
+                        <td className="px-4 py-2 text-right text-sm text-gray-700">
+                          {(rawRow.quantity || 0).toLocaleString()}
+                        </td>
+                        <td className="px-4 py-2 text-right text-sm text-gray-700">
+                          {formatCurrency(rawRow.pricePaid || 0)}
+                        </td>
+                        <td className={`px-4 py-2 text-right text-sm ${getValueColor(rawRow.daysGain || 0)}`}>
+                          {formatCurrency(rawRow.daysGain || 0)}
+                        </td>
+                        <td className={`px-4 py-2 text-right text-sm ${getValueColor(rawRow.totalGain || 0)}`}>
+                          {formatCurrency(rawRow.totalGain || 0)}
+                        </td>
+                        <td className={`px-4 py-2 text-right text-sm ${getValueColor(rawRow.totalGainPercent || 0)}`}>
+                          {formatPercentage(rawRow.totalGainPercent || 0)}
+                        </td>
+                        <td className="px-4 py-2 text-right text-sm font-medium text-gray-700">
+                          {formatCurrency(rawRow.value || 0)}
+                        </td>
+                      </tr>
+                    ))}
+                </React.Fragment>
+              );
+            })}
+
+
+            {/* Global totals row */}
+            <tr className="bg-gray-200 text-black font-semibold border-t-2 border-gray-300">
+              <td className="px-4 py-4" colSpan={5}>
+                <div className="flex items-center space-x-2">
+                  <span>Total</span>
+                </div>
+              </td>
+              <td className="px-4 py-4 text-right">{formatCurrency(globalTotals.pricePaid)}</td>
+              <td className={`px-4 py-4 text-right ${getValueColor(globalTotals.daysGain)}`}>
+                {formatCurrency(globalTotals.daysGain)}
+              </td>
+              <td className={`px-4 py-4 text-right ${getValueColor(globalTotals.totalGain)}`}>
+                {formatCurrency(globalTotals.totalGain)}
+              </td>
+              <td className={`px-4 py-4 text-right ${getValueColor(globalTotals.totalGainPercent)}`}>
+                {formatPercentage(globalTotals.totalGainPercent)}
+              </td>
+              <td className="px-4 py-4 text-right font-bold text-md">{formatCurrency(globalTotals.value)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {filteredGroupedData.length === 0 && searchText && (
+        <div className="text-center py-8 text-gray-500">
+          <p>No results found for "{searchText}"</p>
+        </div>
+      )}
     </div>
   );
 };

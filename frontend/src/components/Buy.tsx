@@ -531,7 +531,7 @@ const Buys = () => {
                             {/* Action Buttons */}
                             <div className="flex space-x-5 pt-4">
                                 <button
-                                    className={`rounded-3xl flex-1 font-medium py-3 px-6 rounded-lg transition-colors ${!stockInfo || parseFloat(quantity) <= 0 || buyLoading || !marketOpen
+                                    className={`rounded-3xl flex-1 font-medium py-3 px-6 transition-colors ${!stockInfo || parseFloat(quantity) <= 0 || buyLoading || !marketOpen
                                         ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
                                         : 'bg-purple-500 hover:bg-purple-600 text-white'
                                         } ${!marketOpen ? 'hover:cursor-not-allowed' : ''}`}
@@ -540,7 +540,7 @@ const Buys = () => {
                                 >
                                     {buyLoading ? 'Processing...' : 'Buy'}
                                 </button>
-                                <button className="rounded-3xl flex-1 border border-gray-300 bg-white hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 rounded-lg transition-colors"
+                                <button className="rounded-3xl flex-1 border border-gray-300 bg-white hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 transition-colors"
                                     onClick={() => {
                                         setQuantity('');
                                         setInvalidqty(false);
