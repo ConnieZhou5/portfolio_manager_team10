@@ -1,17 +1,66 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { apiService, PortfolioItem } from '../services/api';
+import { getTickerColor, clearColorMapping } from '../utils/colorMapping';
+
+interface AssetData {
+    name: string;
+    percentage: number;
+    value: number;
+    color: string;
+}
 
 const Equity = () => {
-    const assets = [
-        { name: 'AAPL', percentage: 15, value: 1500.25, color: '#a855f7' },
-        { name: 'AMD', percentage: 20, value: 2000.33, color: '#3b82f6' },
-        { name: 'NVDA', percentage: 25, value: 2500.33, color: '#f97316' },
-        { name: 'FIG', percentage: 18, value: 1800.33, color: '#ec4899' },
-        { name: 'TSLA', percentage: 12, value: 1200.50, color: '#10b981' },
-        { name: 'MSFT', percentage: 7, value: 700.75, color: '#f59e0b' },
-        { name: 'GOOGL', percentage: 3, value: 300.90, color: '#ef4444' }
-    ];
+    const [assets, setAssets] = useState<AssetData[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [totalValue, setTotalValue] = useState(0);
 
-    const totalValue = assets.reduce((sum, asset) => sum + asset.value, 0);
+    useEffect(() => {
+        // Clear color mapping to ensure fresh assignments
+        clearColorMapping();
+        fetchPortfolioData();
+    }, []);
+
+    const fetchPortfolioData = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            
+            const portfolioItems = await apiService.getAllPortfolioItems();
+            
+            if (portfolioItems.length === 0) {
+                setAssets([]);
+                setTotalValue(0);
+                setLoading(false);
+                return;
+            }
+
+            // Calculate total portfolio value
+            const total = portfolioItems.reduce((sum, item) => sum + item.totalValue, 0);
+            setTotalValue(total);
+
+            // Transform portfolio items to asset data format
+            const assetData: AssetData[] = portfolioItems.map(item => {
+                const percentage = total > 0 ? (item.totalValue / total) * 100 : 0;
+                return {
+                    name: item.ticker,
+                    percentage: Math.round(percentage * 100) / 100, // Round to 2 decimal places
+                    value: item.totalValue,
+                    color: getTickerColor(item.ticker)
+                };
+            });
+
+            // Sort by value (highest first)
+            assetData.sort((a, b) => b.value - a.value);
+            
+            setAssets(assetData);
+        } catch (err) {
+            console.error('Error fetching portfolio data:', err);
+            setError('Failed to load portfolio data. Please try again later.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // Calculate chart segments
     const radius = 100;
@@ -27,6 +76,39 @@ const Equity = () => {
         cumulativePercentage += asset.percentage;
         return segment;
     });
+
+    if (loading) {
+        return (
+            <div className="bg-white rounded-2xl p-10 max-w-6xl mx-auto shadow-lg mb-10">
+                <h2 className="text-2xl text-gray-500 mb-8 text-left">Equities Allocation</h2>
+                <div className="flex items-center justify-center h-64">
+                    <div className="text-gray-500">Loading portfolio data...</div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="bg-white rounded-2xl p-10 max-w-6xl mx-auto shadow-lg mb-10">
+                <h2 className="text-2xl text-gray-500 mb-8 text-left">Equities Allocation</h2>
+                <div className="flex items-center justify-center h-64">
+                    <div className="text-red-500">{error}</div>
+                </div>
+            </div>
+        );
+    }
+
+    if (assets.length === 0) {
+        return (
+            <div className="bg-white rounded-2xl p-10 max-w-6xl mx-auto shadow-lg mb-10">
+                <h2 className="text-2xl text-gray-500 mb-8 text-left">Equities Allocation</h2>
+                <div className="flex items-center justify-center h-64">
+                    <div className="text-gray-500">No portfolio data available. Add some stocks to see your allocation.</div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-white rounded-2xl p-10 max-w-6xl mx-auto shadow-lg mb-10">
@@ -58,8 +140,6 @@ const Equity = () => {
                                 strokeWidth="24"
                                 strokeDasharray={segment.strokeDasharray}
                                 strokeDashoffset={segment.strokeDashoffset}
-                                
-                                
                             />
                         ))}
                     </svg>
