@@ -154,6 +154,7 @@ const Buys = () => {
                     WeekRange52: `$${yearLow.toFixed(2)} - $${yearHigh.toFixed(2)}`,
                     MarketStatus: marketStatus as Market
                 });
+                await fetchAnalysis(stock.symbol);
                 setSearchError(null);
             } else {
                 setSearchError(`No data found for ${ticker}`);
@@ -322,7 +323,7 @@ const Buys = () => {
                             className="rounded-3xl block w-full pl-10 pr-3 py-3 rounded-lg bg-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                             placeholder="Search stocks..."
                             value={symbol}
-                            onChange={(e) => setSymbol(e.target.value)}
+                            onChange={(e) => handleSymbolChange(e.target.value)}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                     const cleanSymbol = symbol.trim().toUpperCase();
