@@ -27,7 +27,7 @@ public class WebConfig {
                             "http://localhost:3000", // Frontend dev server
                             "https://portfolio-manager-team10.vercel.app" // Production frontend
                         )
-                        .allowedMethods("GET", "POST", "PUT", "DELETE")
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*");
             }
         };
