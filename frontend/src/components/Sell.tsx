@@ -510,7 +510,7 @@ const Sells = () => {
                         {/* Sell Transactions Log */}
                         <div className="rounded-3xl bg-white border border-gray-100 overflow-hidden shadow-sm">
                             <div className="flex items-center justify-between px-6 pt-6 pb-2 mb-1 border-b border-gray-100 ">
-                                <h3 className="text-gray-600 font-medium">Buy Transactions Log</h3>
+                                <h3 className="text-gray-600 font-medium">Sell Transactions Log</h3>
 
 
                             </div>
