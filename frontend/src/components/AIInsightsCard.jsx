@@ -1,50 +1,61 @@
 import React, { useState } from 'react';
-import './AIInsightsCard.css'; // optional for styles
 
 const AIInsightsCard = ({ aiAnalysis }) => {
-  const [showRecommendation, setShowRecommendation] = useState(false);
+  const [showReasoning, setShowReasoning] = useState(false);
 
-  const toggleRecommendation = () => {
-    setShowRecommendation(prev => !prev);
+  const toggleReasoning = () => {
+    setShowReasoning(prev => !prev);
   };
 
-  const sentimentColor = (sentiment) => {
-    switch (sentiment.toLowerCase()) {
+  const getColor = (sentiment) => {
+    switch (sentiment?.toLowerCase()) {
       case 'positive':
-        return 'green';
+        return 'bg-green-100 text-green-600';
       case 'negative':
-        return 'red';
+        return 'bg-red-100 text-red-600';
       case 'neutral':
-      case 'mixed':
       default:
-        return 'orange';
+        return 'bg-yellow-100 text-yellow-600';
     }
   };
 
-  const sentiment = aiAnalysis?.generalAnalysis?.includes('recommendation')
-    ? (aiAnalysis.generalAnalysis.match(/recommendation would be to \*\*(\w+)\*\*/i)?.[1] || 'Mixed')
-    : 'Mixed';
+  const InsightRow = ({ label, value }) => (
+    <div className="flex justify-between items-center px-4 py-2 rounded-full bg-gradient-to-br from-white to-purple-200 shadow-sm">
+      <span>{label}</span>
+      <span className={`text-xs px-3 py-1 rounded-full ${getColor(value)}`}>
+        {value}
+      </span>
+    </div>
+  );
 
   return (
-    <div className="ai-insight-card">
-      <h3>AI Stock Analysis</h3>
-
-      <button onClick={toggleRecommendation} className="toggle-button">
-        {showRecommendation ? 'Hide Recommendation' : 'Show Recommendation'}
-      </button>
-
-      {showRecommendation && (
-        <p style={{ color: sentimentColor(sentiment) }}>
-          {aiAnalysis.generalAnalysis}
-        </p>
-      )}
-
-      <div className="meta-info">
-        <p><strong>Analyst Rating:</strong> {aiAnalysis.analystRating}</p>
-        <p><strong>News:</strong> {aiAnalysis.newsSentiment}</p>
-        <p><strong>Social Media:</strong> {aiAnalysis.socialSentiment}</p>
-        <p><strong>Technical Analysis:</strong> {aiAnalysis.technicalSignal}</p>
+    <div className="bg-white rounded-3xl shadow-xl p-6 w-full max-w-md mx-auto text-sm text-gray-800 font-medium space-y-4">
+      <div className="bg-purple-600 flex flex-col items-center rounded-xl py-2">
+        <h3 className="text-white text-lg text-center">AI Insights</h3>
       </div>
+
+      <div className="text-center">
+        <p className="text-sm text-gray-700">Recommendation</p>
+        <div className="inline-block px-6 py-1 mt-1 rounded-full bg-green-100 text-green-600 font-bold text-xl">
+          {aiAnalysis?.recommendation}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <InsightRow label="Technical Analysis" value={aiAnalysis?.techData} />
+        <InsightRow label="News Analysis" value={aiAnalysis?.newsData} />
+        <InsightRow label="AI Analysis" value={aiAnalysis?.aiAnalysis} />
+        <button onClick={toggleReasoning} className="text-gray-700 text-sm">
+          {showReasoning ? 'Hide Reasoning' : 'Show Reasoning'}
+        </button>
+      </div>
+
+      {showReasoning && (
+        <div className="bg-white/30 rounded-xl text-gray-700 text-xs p-4 whitespace-pre-wrap">
+          <p><strong>Reasoning:</strong></p>
+          <p>{aiAnalysis?.reasoning}</p>
+        </div>
+      )}
     </div>
   );
 };
