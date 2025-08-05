@@ -5,22 +5,26 @@ import com.portfolio.backend.config.FmpConfig;
 import com.portfolio.backend.config.NewsConfig;
 import com.portfolio.backend.config.CohereConfig;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 
-import io.github.cdimascio.dotenv.Dotenv;
-
 @Service
 public class AIAnalysisService {
+    @Value("${FMP_API_KEY}")
+    // @Value("${fmp.api-key}")
+    private String fmpApiKey;
 
-    private final Dotenv dotenv = Dotenv.load();
+    @Value("${NEWS_API_KEY}")
+    // @Value("${news.api-key}")
+    private String newsApiKey;
 
-    private final String fmpApiKey = dotenv.get("FMP_API_KEY");
-    private final String newsApiKey = dotenv.get("NEWS_API_KEY");
-    private final String cohereApiKey = dotenv.get("COHERE_API_KEY");
+    @Value("${COHERE_API_KEY}")
+    // @Value("${cohere.api-key}")
+    private String cohereApiKey;
 
     @Autowired
     private FmpConfig fmpConfig;
