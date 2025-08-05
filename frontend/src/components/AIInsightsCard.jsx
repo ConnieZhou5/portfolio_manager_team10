@@ -36,9 +36,6 @@ const AIInsightsCard = ({ aiAnalysis }) => {
 
       <div className="text-center">
         <p className="text-sm text-gray-700">Recommendation</p>
-        <div className="inline-block px-6 py-1 mt-1 rounded-full bg-green-100 text-green-600 font-bold text-xl">
-          {aiAnalysis?.recommendation}
-        </div>
       </div>
 
       <div className="space-y-2">
