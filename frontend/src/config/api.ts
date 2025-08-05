@@ -1,6 +1,5 @@
 // API Configuration
-export const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:8080";
-
+export const API_BASE = process.env.REACT_APP_API_BASE || "portfoliomanagerteam10-production.up.railway.app";
 // API Endpoints
 export const API_ENDPOINTS = {
   PORTFOLIO: `${API_BASE}/api/portfolio`,
