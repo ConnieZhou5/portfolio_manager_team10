@@ -1,5 +1,9 @@
 // API Configuration
-export const API_BASE = process.env.REACT_APP_API_BASE || "portfoliomanagerteam10-production.up.railway.app";
+// For local development, use localhost. For production, use the deployed backend URL
+export const API_BASE = process.env.REACT_APP_API_BASE || 
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+    ? "http://localhost:8080" 
+    : "https://portfoliomanagerteam10-production.up.railway.app");
 // API Endpoints
 export const API_ENDPOINTS = {
   PORTFOLIO: `${API_BASE}/api/portfolio`,

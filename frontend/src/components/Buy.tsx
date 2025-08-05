@@ -443,7 +443,7 @@ const Buys = () => {
                             {analysis ? (
                                 <AIInsightsCard aiAnalysis={analysis} />
                             ) : (
-                                <p>Loading analysis...</p>
+                                <p>Enter a stock symbol to see AI analysis</p>
                             )}
                         </div>
                     </div>
