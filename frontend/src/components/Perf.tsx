@@ -45,18 +45,18 @@ export default function Performance() {
     // Calculate Y-axis domain with clean intervals
     const calculateYAxisDomain = (data: MonthlyPnLData[]) => {
         if (!data || data.length === 0) return [0, 1000];
-        
+
         const allValues = data.flatMap(item => [item.realized, item.unrealized]);
         const minValue = Math.min(...allValues);
         const maxValue = Math.max(...allValues);
-        
+
         // Add some padding to the range
         const range = maxValue - minValue;
         const padding = range * 0.1;
-        
+
         const domainMin = Math.floor((minValue - padding) / 100) * 100;
         const domainMax = Math.ceil((maxValue + padding) / 100) * 100;
-        
+
         return [domainMin, domainMax];
     };
 
@@ -72,6 +72,7 @@ export default function Performance() {
             </div>
         );
     }
+
 
     if (error) {
         return (
@@ -106,6 +107,7 @@ export default function Performance() {
             <div className="mb-8">
                 <h1 className="text-2xl text-gray-500 mb-8 text-left">Profit and Loss</h1>
             </div>
+
 
             <div className="flex flex-col lg:flex-row gap-8">
                 {/* Chart Section */}
@@ -165,7 +167,7 @@ export default function Performance() {
 
                 {/* Summary Table */}
                 <div className="ml-2">
-                    <div className="bg-white rounded-lg overflow-hidden shadow-sm mr-14">
+                    <div className="bg-white rounded-lg overflow-hidden shadow-sm mr-14 border border-gray-200">
                         <table className="min-w-full">
                             <thead>
                                 <tr className="border-b border-gray-200">
@@ -205,4 +207,4 @@ export default function Performance() {
     );
 }
 
-export {Performance};
+export { Performance };

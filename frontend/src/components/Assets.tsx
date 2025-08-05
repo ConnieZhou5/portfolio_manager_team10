@@ -34,7 +34,7 @@ const Asset = () => {
                     try {
                         const symbols = portfolioItems.map(item => item.ticker);
                         const stockData = await apiService.getStockData(symbols);
-                        
+
                         // Calculate investments value using current market prices
                         investmentsValue = portfolioItems.reduce((total, item) => {
                             const currentStock = stockData.find(stock => stock.symbol === item.ticker);
@@ -63,17 +63,17 @@ const Asset = () => {
                 const equitiesPercentage = totalAssetsValue > 0 ? (investmentsValue / totalAssetsValue) * 100 : 0;
 
                 const assetData: AssetData[] = [
-                    { 
-                        name: 'Cash', 
-                        percentage: Math.round(cashPercentage * 10) / 10, 
-                        value: cashValue, 
-                        color: 'text-purple-500' 
+                    {
+                        name: 'Cash',
+                        percentage: Math.round(cashPercentage * 10) / 10,
+                        value: cashValue,
+                        color: 'text-purple-500'
                     },
-                    { 
-                        name: 'Equities', 
-                        percentage: Math.round(equitiesPercentage * 10) / 10, 
-                        value: investmentsValue, 
-                        color: 'text-blue-500' 
+                    {
+                        name: 'Equities',
+                        percentage: Math.round(equitiesPercentage * 10) / 10,
+                        value: investmentsValue,
+                        color: 'text-blue-500'
                     }
                 ];
 
@@ -97,7 +97,7 @@ const Asset = () => {
 
     if (loading) {
         return (
-            <div className="bg-white rounded-3xl p-10 max-w-6xl mx-auto shadow-lg mb-10">
+            <div className="bg-white rounded-3xl p-10 max-w-6xl mx-auto shadow-lg mb-10 overflow-hidden border border-gray-200">
                 <h2 className="text-2xl text-gray-500 mb-8 text-left">Asset Class Allocation</h2>
                 <div className="flex items-center justify-center h-64">
                     <div className="text-gray-500">Loading asset data...</div>
@@ -108,7 +108,7 @@ const Asset = () => {
 
     if (error) {
         return (
-            <div className="bg-white rounded-3xl p-10 max-w-6xl mx-auto shadow-lg mb-10">
+            <div className="bg-white rounded-3xl p-10 max-w-6xl mx-auto shadow-lg mb-10 overflow-hidden border border-gray-200">
                 <h2 className="text-2xl text-gray-500 mb-8 text-left">Asset Class Allocation</h2>
                 <div className="flex items-center justify-center h-64">
                     <div className="text-red-500">{error}</div>
@@ -118,8 +118,9 @@ const Asset = () => {
     }
 
     return (
-        <div className="bg-white rounded-3xl p-10 max-w-6xl mx-auto shadow-lg mb-10">
+        <div className="bg-white rounded-3xl p-10 max-w-6xl mx-auto shadow-lg mb-10 overflow-hidden border border-gray-200">
             <h2 className="text-2xl text-gray-500 mb-8 text-left">Asset Class Allocation</h2>
+
 
             <div className="flex flex-col lg:flex-row gap-20">
                 {/* Donut Chart */}
@@ -135,6 +136,7 @@ const Asset = () => {
                             strokeWidth="24"
                         />
 
+
                         {/* Cash segment */}
                         {assets.length > 0 && (
                             <circle
@@ -148,6 +150,7 @@ const Asset = () => {
                                 strokeDashoffset={0}
                             />
                         )}
+
 
                         {/* Equities segment */}
                         {assets.length > 1 && (
@@ -164,17 +167,20 @@ const Asset = () => {
                         )}
                     </svg>
 
+
                     {/* Center text */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
                         <div className="text-2xl font-bold text-gray-800">
                             ${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                         </div>
+                        <div className="text-sm text-gray-500">Total Assets</div>
                     </div>
                 </div>
 
+
                 {/* Asset breakdown table */}
                 <div className="ml-12">
-                    <div className="bg-white rounded-lg overflow-hidden shadow-sm">
+                    <div className="bg-white rounded-lg overflow-hidden shadow-sm border border-gray-200">
                         <table className="min-w-full">
                             <thead>
                                 <tr className="border-b border-gray-200">

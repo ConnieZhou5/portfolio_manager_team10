@@ -37,7 +37,7 @@ const Sells = () => {
     const [sellLoading, setSellLoading] = useState(false);
     const [sellError, setSellError] = useState<string | null>(null);
     const [sellSuccess, setSellSuccess] = useState<string | null>(null);
-    const [isExpanded, setIsExpanded] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(true);
     const { refreshTrigger, triggerRefresh } = usePortfolio();
 
     // Auto-dismiss success and error messages after 10 seconds
@@ -306,8 +306,8 @@ const Sells = () => {
             </div>
 
             <div className={`grid gap-8 transition-all duration-300 ${isExpanded ? 'grid-cols-1 lg:grid-cols-3' : 'grid-cols-1'}`}>
-            {/* Left Column - Stock Info */}
-            <div className={`transition-all duration-300 ${isExpanded ? 'lg:col-span-2' : 'col-span-1'}`}>
+                {/* Left Column - Stock Info */}
+                <div className={`transition-all duration-300 ${isExpanded ? 'lg:col-span-2' : 'col-span-1'}`}>
                     {/* Search Bar */}
                     <div className="relative mb-6">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center">
@@ -323,74 +323,74 @@ const Sells = () => {
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
-                    
-                    <div className={`flex justify-end mb-4`}>
-    <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-full border ${getMarketStatusStyles().containerClass}`}>
-        <div className={`w-2 h-2 rounded-full ${getMarketStatusStyles().dotClass}`}></div>
-        <span className={`text-sm font-medium ${getMarketStatusStyles().textClass}`}>
-            {marketOpen ? 'Market Open' : 'Market Closed'}
-        </span>
-    </div>
-</div>
 
-                    
+                    <div className={`flex justify-end mb-4`}>
+                        <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-full border ${getMarketStatusStyles().containerClass}`}>
+                            <div className={`w-2 h-2 rounded-full ${getMarketStatusStyles().dotClass}`}></div>
+                            <span className={`text-sm font-medium ${getMarketStatusStyles().textClass}`}>
+                                {marketOpen ? 'Market Open' : 'Market Closed'}
+                            </span>
+                        </div>
+                    </div>
 
                     {/* Table Section */}
-
                     <div className="relative">
-                    <div className="col-span-2 bg-white rounded-2xl p-6 shadow-md text-xs">
-                        {loading ? (
-                            <div className="flex items-center justify-center h-32">
-                                <div className="text-gray-500">Loading portfolio data...</div>
-                            </div>
-                        ) : error ? (
-                            <div className="flex items-center justify-center h-32">
-                                <div className="text-red-500">{error}</div>
-                            </div>
-                        ) : portfolioData.length === 0 ? (
-                            <div className="flex items-center justify-center h-32">
-                                <div className="text-gray-500">No portfolio holdings found</div>
-                            </div>
-                        ) : (
-                                        <PivotTable data={portfolioData} searchText={searchQuery} />
-                                    )}
-                    </div>
+                        <div className="col-span-2 bg-white rounded-2xl p-6 shadow-md text-xs">
+                            {loading ? (
+                                <div className="flex items-center justify-center h-32">
+                                    <div className="text-gray-500">Loading portfolio data...</div>
+                                </div>
+                            ) : error ? (
+                                <div className="flex items-center justify-center h-32">
+                                    <div className="text-red-500">{error}</div>
+                                </div>
+                            ) : portfolioData.length === 0 ? (
+                                <div className="flex items-center justify-center h-32">
+                                    <div className="text-gray-500">No portfolio holdings found</div>
+                                </div>
+                            ) : (
+                                            <PivotTable data={portfolioData} searchText={searchQuery} />
+                                        )}
+                        </div>
 
-                    <div className="absolute top-44 -right-4 z-10">
-                        {isExpanded ? (
-                            <button
-                                onClick={() => setIsExpanded(false)}
-                                className="bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-full shadow-lg transition-colors"
-                                aria-label="Close trading panel"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                </svg>
-                            </button>
-                        ) : (
-                            <button
-                                onClick={() => setIsExpanded(true)}
-                                className="bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-full shadow-lg transition-colors"
-                                aria-label="Open trading panel"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                </svg>
-                            </button>
-                        )}
-                    </div>
+
+                        <div className="absolute top-44 -right-7 z-10">
+                            {isExpanded ? (
+                                <button
+                                    onClick={() => setIsExpanded(false)}
+                                    className="bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-full shadow-lg transition-colors"
+                                    aria-label="Close trading panel"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
+                            ) : (
+                                    <button
+                                        onClick={() => setIsExpanded(true)}
+                                        className="bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-full shadow-lg transition-colors"
+                                        aria-label="Open trading panel"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                        </svg>
+                                    </button>
+                                )}
+                        </div>
                     </div>
                 </div>
 
                 {/* Right Column - Sell Form and Transactions (Sticky) */}
                 {isExpanded && (
-                    <div className="space-y-6 animate-in slide-in-from-right duration-600">
+                    <div className="space-y-6 animate-in slide-in-from-right duration-600 bg-white border-l border-gray-200 pl-6 -mr-8 pr-8 rounded-r-3xl">
 
                         {/* Sell Form */}
 
-                        <div className="bg-orange-50 rounded-3xl p-10 space-y-6">
+                        <div className="bg-white border border-gray-100 rounded-3xl p-8 space-y-6 shadow-sm">
 
-                            
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold text-gray-800">Sell Order</h3>
+                            </div>
 
                             {/* Symbol Input */}
                             <div className="flex">
@@ -484,8 +484,8 @@ const Sells = () => {
                             <div className="flex space-x-5 pt-4">
                                 <button
                                     className={`rounded-3xl flex-1 font-medium py-3 px-6 rounded-lg transition-colors ${!symbol || parseFloat(quantity) <= 0 || !marketOpen || sellLoading
-                                            ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                                            : 'bg-orange-500 hover:bg-orange-600 text-white'
+                                        ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                                        : 'bg-orange-500 hover:bg-orange-600 text-white'
                                         } ${!marketOpen ? 'hover:cursor-not-allowed' : ''}`}
                                     disabled={!symbol || parseFloat(quantity) <= 0 || !marketOpen || sellLoading}
                                     onClick={handleSellTransaction}
@@ -506,9 +506,14 @@ const Sells = () => {
                             </div>
                         </div>
 
+
                         {/* Sell Transactions Log */}
-                        <div className="bg-gray-100 rounded-lg overflow-hidden shadow-sm rounded-3xl">
-                            <h3 className="text-gray-600 pt-6 pb-2 pl-6 mb-1 font-medium text-left">Sell Transactions Log</h3>
+                        <div className="rounded-3xl bg-white border border-gray-100 overflow-hidden shadow-sm">
+                            <div className="flex items-center justify-between px-6 pt-6 pb-2 mb-1 border-b border-gray-100 ">
+                                <h3 className="text-gray-600 font-medium">Buy Transactions Log</h3>
+
+
+                            </div>
                             <div className="max-h-96 overflow-y-auto">
                                 {loading ? (
                                     <div className="pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left">
@@ -524,11 +529,11 @@ const Sells = () => {
                                     </div>
                                 ) : (
                                                 sellTrades.map((trade, index) => (
-                                                    <div key={trade.id} className={`pl-6 pr-6 pt-2 pb-2 bg-white text-md text-gray-500 text-left ${index < sellTrades.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                                                    <div key={trade.id} className={`pl-6 pr-6 pt-2 pb-2 bg-white text-sm text-gray-500 text-left ${index < sellTrades.length - 1 ? 'border-b border-gray-100' : ''}`}>
                                                         Sold {trade.quantity} {trade.ticker} @ ${trade.price.toFixed(2)}
                                                         <br></br>
-                                        Total: ${trade.totalValue.toFixed(2)}
-                                                        <span className="text-sm text-gray-500 block text-right">{formatDate(trade.tradeDate)}</span>
+                                                        Total: ${trade.totalValue.toFixed(2)}
+                                                        <span className="text-xs text-gray-500 block text-right">{formatDate(trade.tradeDate)}</span>
                                                     </div>
                                                 ))
                                             )}
