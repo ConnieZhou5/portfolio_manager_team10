@@ -10,4 +10,5 @@ export const API_ENDPOINTS = {
   BUY: `${API_BASE}/api/buy`,
   SELL: `${API_BASE}/api/sell`,
   PNL: `${API_BASE}/api/pnl`,
+  ANALYSIS: `${API_BASE}/api/analysis`,
 } as const; 

@@ -1,9 +1,8 @@
 import axios from 'axios';
-
-const API_URL = 'http://localhost:8080/api/analysis'; // Update if deployed
+import { API_ENDPOINTS } from '../config/api';
 
 const getAnalysis = async (symbol: string) => {
-    const response = await axios.get(`${API_URL}/${symbol}`);
+    const response = await axios.get(`${API_ENDPOINTS.ANALYSIS}/${symbol}`);
     return response.data;
 };
 
