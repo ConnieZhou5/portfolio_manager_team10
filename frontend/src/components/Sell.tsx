@@ -335,7 +335,7 @@ const Sells = () => {
 
                     {/* Table Section */}
                     <div className="relative">
-                        <div className="col-span-2 bg-white rounded-2xl p-6 shadow-md text-xs">
+                        <div className="col-span-2 text-xs">
                             {loading ? (
                                 <div className="flex items-center justify-center h-32">
                                     <div className="text-gray-500">Loading portfolio data...</div>
