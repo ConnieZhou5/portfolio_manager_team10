@@ -195,6 +195,10 @@ class ApiService {
   async getMonthlyPnL(): Promise<PnLResponse> {
     return this.request<PnLResponse>(`${API_ENDPOINTS.PNL}/monthly`);
   }
+
+  async getAnalysis(symbol: string): Promise<any> {
+    return this.request<any>(`${API_ENDPOINTS.ANALYSIS}/${symbol}`);
+  }
 }
 
 export const apiService = new ApiService(); 

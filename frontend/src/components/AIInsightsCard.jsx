@@ -56,7 +56,7 @@ const AIInsightsCard = ({ aiAnalysis }) => {
           {Array.isArray(aiAnalysis?.reasoning) ? (
             <ul className="list-disc list-inside space-y-1 mt-1">
               {aiAnalysis.reasoning.map((point, idx) => (
-                <li key={idx}>{point}</li>
+                <li key={idx}>{point.replace(/^[•\-\s]+/, '').trim()}</li>
               ))}
             </ul>
           ) : (
@@ -65,7 +65,7 @@ const AIInsightsCard = ({ aiAnalysis }) => {
                 ?.split(/\n+|\.\s+/) // split by newlines or sentence ends
                 .filter((line) => line.trim().length > 0)
                 .map((point, idx) => (
-                  <li key={idx}>{point.trim()}</li>
+                  <li key={idx}>{point.replace(/^[•\-\s]+/, '').trim()}</li>
                 ))}
             </ul>
           )}

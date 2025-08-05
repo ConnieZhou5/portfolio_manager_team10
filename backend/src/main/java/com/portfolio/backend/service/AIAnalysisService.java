@@ -83,26 +83,15 @@ public class AIAnalysisService {
             // Call Cohere API
             ResponseEntity<JsonNode> response = restTemplate.postForEntity("https://api.cohere.ai/v1/chat", request, JsonNode.class);
 
-            // Log raw response
-            System.out.println("Cohere full raw response:");
-            System.out.println(response.getBody().toPrettyString());
-
             String aiAnalysisText = response.getBody().has("text")
                     ? response.getBody().get("text").asText()
                     : response.getBody().get("generations").get(0).get("text").asText();
-
-            // Log extracted text
-            System.out.println("Cohere extracted 'text':");
-            System.out.println(aiAnalysisText);
 
             // Clean markdown if any
             String cleanedJson = aiAnalysisText
                     .replaceAll("(?s)```json", "")
                     .replaceAll("(?s)```", "")
                     .trim();
-
-            System.out.println("Cleaned JSON:");
-            System.out.println(cleanedJson);
 
             // Parse JSON
             ObjectMapper mapper = new ObjectMapper();

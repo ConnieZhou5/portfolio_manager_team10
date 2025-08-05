@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { apiService, TradeHistory, StockData, BuyRequest, CashBalance } from '../services/api';
 import { usePortfolio } from '../context/PortfolioContext';
 import { isMarketOpen } from '../utils/marketStatus';
-import getAnalysis from './aiAnalysisService';
 import AIInsightsCard from './AIInsightsCard';
 
 type Market = 'Market Open' | 'Market Closed'
@@ -41,6 +40,7 @@ const Buys = () => {
     const [isExpanded, setIsExpanded] = useState(true);
     const { triggerRefresh } = usePortfolio();
     const [analysis, setAnalysis] = useState<any>(null);
+    const [analysisLoading, setAnalysisLoading] = useState(false);
 
     // Auto-dismiss success and error messages after 10 seconds
     useEffect(() => {
@@ -79,11 +79,14 @@ const Buys = () => {
     const fetchAnalysis = async (ticker: string) => {
         if (!ticker.trim()) return;
         try {
-            const result = await getAnalysis(ticker.trim().toUpperCase());
+            setAnalysisLoading(true);
+            const result = await apiService.getAnalysis(ticker.trim().toUpperCase());
             setAnalysis(result);
         } catch (err) {
             console.error('Error fetching analysis:', err);
             setAnalysis(null);
+        } finally {
+            setAnalysisLoading(false);
         }
     };
 
@@ -153,8 +156,9 @@ const Buys = () => {
                     WeekRange52: `$${yearLow.toFixed(2)} - $${yearHigh.toFixed(2)}`,
                     MarketStatus: marketStatus as Market
                 });
-                await fetchAnalysis(stock.symbol);
                 setSearchError(null);
+                // Fetch AI analysis separately without blocking the search loading
+                fetchAnalysis(stock.symbol);
             } else {
                 setSearchError(`No data found for ${ticker}`);
                 setStockInfo(null);
@@ -443,6 +447,11 @@ const Buys = () => {
                         <div className="w-full rounded-lg flex items-center justify-center">
                             {analysis ? (
                                 <AIInsightsCard aiAnalysis={analysis} />
+                            ) : analysisLoading ? (
+                                <div className="flex flex-col items-center space-y-2">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+                                    <p className="text-gray-600 text-sm">AI analyzing...</p>
+                                </div>
                             ) : (
                                 <p>Enter a stock symbol to see AI analysis</p>
                             )}
