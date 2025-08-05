@@ -14,16 +14,13 @@ import java.util.*;
 
 @Service
 public class AIAnalysisService {
-    @Value("${FMP_API_KEY}")
-    // @Value("${fmp.api-key}")
+    @Value("${fmp.api-key}")
     private String fmpApiKey;
 
-    @Value("${NEWS_API_KEY}")
-    // @Value("${news.api-key}")
+    @Value("${news.api-key}")
     private String newsApiKey;
 
-    @Value("${COHERE_API_KEY}")
-    // @Value("${cohere.api-key}")
+    @Value("${cohere.api-key}")
     private String cohereApiKey;
 
     @Autowired
