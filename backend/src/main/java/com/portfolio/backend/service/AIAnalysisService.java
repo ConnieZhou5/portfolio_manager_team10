@@ -11,8 +11,16 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 
+import io.github.cdimascio.dotenv.Dotenv;
+
 @Service
 public class AIAnalysisService {
+
+    private final Dotenv dotenv = Dotenv.load();
+
+    private final String fmpApiKey = dotenv.get("FMP_API_KEY");
+    private final String newsApiKey = dotenv.get("NEWS_API_KEY");
+    private final String cohereApiKey = dotenv.get("COHERE_API_KEY");
 
     @Autowired
     private FmpConfig fmpConfig;
@@ -26,8 +34,8 @@ public class AIAnalysisService {
     private final RestTemplate restTemplate = new RestTemplate();
 
     public Map<String, Object> getAnalysis(String symbol) {
-        String techUrl = String.format("https://financialmodelingprep.com/api/v3/quote/%s?apikey=%s", symbol, fmpConfig.getApiKey());
-        String newsUrl = String.format("https://newsapi.org/v2/everything?q=%s&apiKey=%s", symbol, newsConfig.getApiKey());
+        String techUrl = String.format("https://financialmodelingprep.com/api/v3/quote/%s?apikey=%s", symbol, fmpApiKey);
+        String newsUrl = String.format("https://newsapi.org/v2/everything?q=%s&apiKey=%s", symbol, newsApiKey);
 
         JsonNode techData = restTemplate.getForObject(techUrl, JsonNode.class);
         JsonNode newsData = restTemplate.getForObject(newsUrl, JsonNode.class);
@@ -44,7 +52,7 @@ public class AIAnalysisService {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(cohereConfig.getApiKey());
+        headers.setBearerAuth(cohereApiKey);
 
         Map<String, Object> payload = new HashMap<>();
         payload.put("message", aiPrompt);
