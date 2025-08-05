@@ -1,6 +1,7 @@
 package com.portfolio.backend.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.portfolio.backend.config.FmpConfig;
 import com.portfolio.backend.config.NewsConfig;
 import com.portfolio.backend.config.CohereConfig;
@@ -35,43 +36,74 @@ public class AIAnalysisService {
     private final RestTemplate restTemplate = new RestTemplate();
 
     public Map<String, Object> getAnalysis(String symbol) {
-        String techUrl = String.format("https://financialmodelingprep.com/api/v3/quote/%s?apikey=%s", symbol, fmpApiKey);
-        String newsUrl = String.format("https://newsapi.org/v2/everything?q=%s&apiKey=%s", symbol, newsApiKey);
+        try {
+            String techUrl = String.format("https://financialmodelingprep.com/api/v3/quote/%s?apikey=%s", symbol,
+                    fmpApiKey);
+            String newsUrl = String.format("https://newsapi.org/v2/everything?q=%s&apiKey=%s", symbol, newsApiKey);
 
-        JsonNode techData = restTemplate.getForObject(techUrl, JsonNode.class);
-        JsonNode newsData = restTemplate.getForObject(newsUrl, JsonNode.class);
+            JsonNode techData = restTemplate.getForObject(techUrl, JsonNode.class);
+            JsonNode newsData = restTemplate.getForObject(newsUrl, JsonNode.class);
 
-        String aiPrompt = String.format("""
-            Based on the following stock data and news, provide a concise investment recommendation (buy/hold/sell) for %s.
-            
-            Stock Data:
-            %s
-            
-            News Articles:
-            %s
-        """, symbol, techData.toPrettyString(), newsData.get("articles").toPrettyString());
+            String aiPrompt = String.format(
+                    """
+                            Based on the following stock data and news, provide an investment recommendation for the stock symbol %s.
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(cohereApiKey);
+                            Please return the result strictly in the following JSON format:
 
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("message", aiPrompt);
-        payload.put("model", "command-r"); // free-tier model
-        payload.put("chat_history", new ArrayList<>()); // optional, empty
+                            {
+                              "techData": "Positive | Neutral | Negative",
+                              "newsData": "Positive | Neutral | Negative",
+                              "aiAnalysis": "Positive | Neutral | Negative",
+                              "recommendation": "BUY | HOLD | SELL",
+                              "reasoning": "<Concise explanation in bullet points format combining technicals and news to justify the recommendation>"
+                            }
 
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
+                            Stock Data:
+                            %s
 
-        ResponseEntity<JsonNode> response = restTemplate.postForEntity("https://api.cohere.ai/v1/chat", request, JsonNode.class);
+                            News Articles:
+                            %s
+                            """,
+                    symbol, techData.toPrettyString(), newsData.get("articles").toPrettyString());
 
-        String aiAnalysis = response.getBody().has("text")
-                ? response.getBody().get("text").asText()
-                : response.getBody().get("generations").get(0).get("text").asText();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(cohereApiKey);
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("technicalAnalysis", techData);
-        result.put("newsAnalysis", newsData);
-        result.put("generalAnalysis", aiAnalysis);
-        return result;
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("message", aiPrompt);
+            payload.put("model", "command-r"); // free-tier model
+            payload.put("chat_history", new ArrayList<>()); // optional, empty
+
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
+
+            ResponseEntity<JsonNode> response = restTemplate.postForEntity("https://api.cohere.ai/v1/chat", request,
+                    JsonNode.class);
+
+            String aiAnalysisText = response.getBody().has("text")
+                    ? response.getBody().get("text").asText()
+                    : response.getBody().get("generations").get(0).get("text").asText();
+
+            ObjectMapper mapper = new ObjectMapper();
+            // Remove Markdown formatting if it exists
+            String cleanedJson = aiAnalysisText
+                    .replaceAll("(?s)```json", "")
+                    .replaceAll("(?s)```", "")
+                    .trim();
+
+            JsonNode parsed = mapper.readTree(cleanedJson);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("techData", parsed.get("techData").asText());
+            result.put("newsData", parsed.get("newsData").asText());
+            result.put("aiAnalysis", parsed.get("aiAnalysis").asText());
+            result.put("recommendation", parsed.get("recommendation").asText());
+            result.put("reasoning", parsed.get("reasoning").asText());
+
+            return result;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Map.of("error", "Failed to generate AI analysis.");
+        }
     }
 }

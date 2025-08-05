@@ -4,8 +4,7 @@ import { apiService, TradeHistory, StockData, BuyRequest, CashBalance } from '..
 import { usePortfolio } from '../context/PortfolioContext';
 import { isMarketOpen } from '../utils/marketStatus';
 import getAnalysis from './aiAnalysisService';
-// import AIInsightsCard from "./AIInsightsCard"
-
+import AIInsightsCard from './AIInsightsCard';
 
 type Market = 'Market Open' | 'Market Closed'
 
@@ -440,18 +439,9 @@ const Buys = () => {
                         </div>
 
                         {/* Chart Placeholder */}
-                        <div className="w-full h-[500px] bg-gray-50 rounded-lg flex items-center justify-center">
-                            {/* This div will be replaced with the AI analysis */}
+                        <div className="w-full rounded-lg flex items-center justify-center">
                             {analysis ? (
-                                <div className="ai-insights">
-                                    <div className="recommendation">
-                                        <h3>Recommendation: {analysis.generalAnalysis}</h3>
-                                        <div>Analyst Rating: Positive</div>
-                                        <div>News: Mixed</div>
-                                        <div>Social Media: Avoid</div>
-                                        <div>Technical Analysis: Bullish</div>
-                                    </div>
-                                </div>
+                                <AIInsightsCard aiAnalysis={analysis} />
                             ) : (
                                 <p>Loading analysis...</p>
                             )}
