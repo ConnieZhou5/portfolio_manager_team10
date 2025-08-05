@@ -23,7 +23,10 @@ public class WebConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:3000") // Frontend dev server
+                        .allowedOrigins(
+                            "http://localhost:3000", // Frontend dev server
+                            "https://portfolio-manager-team10.vercel.app" // Production frontend
+                        )
                         .allowedMethods("GET", "POST", "PUT", "DELETE")
                         .allowedHeaders("*");
             }
