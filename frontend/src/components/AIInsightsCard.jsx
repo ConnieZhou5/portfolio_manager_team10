@@ -51,9 +51,24 @@ const AIInsightsCard = ({ aiAnalysis }) => {
       </div>
 
       {showReasoning && (
-        <div className="bg-white/30 rounded-xl text-gray-700 text-xs p-4 whitespace-pre-wrap">
-          <p><strong>Reasoning:</strong></p>
-          <p>{aiAnalysis?.reasoning}</p>
+        <div className="bg-white/30 rounded-xl text-gray-700 text-xs p-4 text-justify">
+          <p className="font-semibold">Reasoning:</p>
+          {Array.isArray(aiAnalysis?.reasoning) ? (
+            <ul className="list-disc list-inside space-y-1 mt-1">
+              {aiAnalysis.reasoning.map((point, idx) => (
+                <li key={idx}>{point}</li>
+              ))}
+            </ul>
+          ) : (
+            <ul className="list-disc list-inside space-y-1 mt-1">
+              {aiAnalysis?.reasoning
+                ?.split(/\n+|\.\s+/) // split by newlines or sentence ends
+                .filter((line) => line.trim().length > 0)
+                .map((point, idx) => (
+                  <li key={idx}>{point.trim()}</li>
+                ))}
+            </ul>
+          )}
         </div>
       )}
     </div>
