@@ -11,6 +11,8 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Service
@@ -38,17 +40,25 @@ public class AIAnalysisService {
 
     public Map<String, Object> getAnalysis(String symbol) {
         try {
-            // Fetch stock and news data
+            // Step 1: Fetch stock data (and extract company name from it)
             String techUrl = String.format("https://financialmodelingprep.com/api/v3/quote/%s?apikey=%s", symbol, fmpApiKey);
-            String newsUrl = String.format("https://newsapi.org/v2/everything?q=%s&apiKey=%s", symbol, newsApiKey);
-
             JsonNode techData = restTemplate.getForObject(techUrl, JsonNode.class);
+
+            if (techData == null || !techData.isArray() || techData.size() == 0) {
+                return Map.of("error", "Stock data not found for symbol: " + symbol);
+            }
+
+            String companyName = techData.get(0).get("name").asText();
+
+            // Step 2: Fetch news using company name
+            String encodedCompanyName = URLEncoder.encode(companyName, StandardCharsets.UTF_8);
+            String newsUrl = String.format("https://newsapi.org/v2/everything?q=%s&apiKey=%s", encodedCompanyName, newsApiKey);
             JsonNode newsData = restTemplate.getForObject(newsUrl, JsonNode.class);
 
-            // Updated prompt
+            // Step 3: Build AI prompt
             String aiPrompt = String.format(
                 """
-                Based on the following stock data and news, provide an investment recommendation for the stock symbol %s.
+                Based on the following stock data and news, provide an investment recommendation for the company %s (stock symbol %s).
 
                 You must return the response strictly in the following JSON format. Do not include markdown, triple backticks, or any other formatting:
 
@@ -66,9 +76,12 @@ public class AIAnalysisService {
                 News Articles:
                 %s
                 """,
-                symbol, techData.toPrettyString(), newsData.get("articles").toPrettyString());
+                companyName, symbol,
+                techData.toPrettyString(),
+                newsData.get("articles").toPrettyString()
+            );
 
-            // Request setup
+            // Step 4: Call Cohere API
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.setBearerAuth(cohereApiKey);
@@ -79,21 +92,19 @@ public class AIAnalysisService {
             payload.put("chat_history", new ArrayList<>());
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
-
-            // Call Cohere API
             ResponseEntity<JsonNode> response = restTemplate.postForEntity("https://api.cohere.ai/v1/chat", request, JsonNode.class);
 
             String aiAnalysisText = response.getBody().has("text")
                     ? response.getBody().get("text").asText()
                     : response.getBody().get("generations").get(0).get("text").asText();
 
-            // Clean markdown if any
+            // Step 5: Clean markdown if any
             String cleanedJson = aiAnalysisText
                     .replaceAll("(?s)```json", "")
                     .replaceAll("(?s)```", "")
                     .trim();
 
-            // Parse JSON
+            // Step 6: Parse JSON
             ObjectMapper mapper = new ObjectMapper();
             JsonNode parsed = mapper.readTree(cleanedJson);
 
