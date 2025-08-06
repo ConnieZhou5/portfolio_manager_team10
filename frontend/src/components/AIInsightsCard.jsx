@@ -1,7 +1,21 @@
 import React, { useState } from 'react';
+import { TrendingUp, TrendingDown, BarChart3, Newspaper, Brain, Zap } from 'lucide-react';
+
 
 const AIInsightsCard = ({ aiAnalysis }) => {
   const [showReasoning, setShowReasoning] = useState(false);
+
+  const analysisData = {
+    recommendation: aiAnalysis.recommendation || 'Buy',
+    techData: aiAnalysis.techData || 'Positive',
+    newsData: aiAnalysis.newsData || 'Positive',
+    aiAnalysis: aiAnalysis.aiAnalysis || 'Positive',
+    reasoning: aiAnalysis.reasoning || [
+      'Strong technical indicators',
+      'Good news',
+      'Buy',
+    ]
+  };
 
   const toggleReasoning = () => {
     setShowReasoning(prev => !prev);
@@ -9,66 +23,86 @@ const AIInsightsCard = ({ aiAnalysis }) => {
 
   const getColor = (sentiment) => {
     switch (sentiment?.toLowerCase()) {
-      case 'positive':
-        return 'bg-green-100 text-green-600';
-      case 'negative':
-        return 'bg-red-100 text-red-600';
-      case 'neutral':
+      case 'positive', 'buy':
+        return 'bg-gradient-to-r from-green-100 to-green-50 text-green-700 border-green-200';
+      case 'negative', 'sell':
+        return 'bg-gradient-to-r from-red-100 to-red-50 text-red-700 border-red-200';
       default:
-        return 'bg-yellow-100 text-yellow-600';
+        return 'bg-gradient-to-r from-yellow-100 to-yellow-50 text-yellow-700 border-yellow-200';
     }
   };
 
-  const InsightRow = ({ label, value }) => (
-    <div className="flex justify-between items-center px-4 py-2 rounded-full bg-gradient-to-br from-white to-purple-200 shadow-sm">
-      <span>{label}</span>
-      <span className={`text-xs px-3 py-1 rounded-full ${getColor(value)}`}>
+  const getRecommendationIcon = (recommendation) => {
+    switch (recommendation?.toLowerCase()) {
+      case 'buy':
+        return <TrendingUp className="w-5 h-5" />;
+      case 'sell':
+        return <TrendingDown className="w-5 h-5" />;
+      default:
+        return;
+    }
+  };
+
+  const InsightRow = ({ label, value, icon }) => (
+    <div className="group flex justify-between items-center px-4 py-2 rounded-3xl bg-gradient-to-br from-white via-purple-50 to-purple-100 shadow-sm border border-purple-100">
+      <div className="flex items-center gap-2">
+        <div className="text-gray-500">{icon}</div>
+        <span className="font-medium text-gray-500">{label}</span>
+      </div>
+      <span className={`text-xs px-4 py-2 rounded-full font-semibold border transition-all duration-300 ${getColor(value)}`}>
         {value}
       </span>
-    </div>
-  );
+    </div>);
 
   return (
-    <div className="bg-white rounded-3xl shadow-xl p-6 w-full max-w-md mx-auto text-sm text-gray-800 font-medium space-y-4">
-      <div className="bg-purple-600 flex flex-col items-center rounded-xl py-2">
-        <h3 className="text-white text-lg text-center">AI Insights</h3>
+    <div className="mt-8 mb-8 bg-white rounded-3xl p-8 w-[600px] shadow-sm mx-auto text-gray-800 space-y-6 border border-purple-100">
+      <div className="flex items-center gap-2 bg-gradient-to-br from-purple-500 via-purple-500 to-purple-600 rounded-2xl p-4 shadow-lg text-left">
+        <Zap className="w-5 h-5 text-white" />
+        <h3 className="text-white text-xl font-bold">AI Insights</h3>
       </div>
 
-      <div className="text-center">
-        <p className="text-sm text-gray-700">Recommendation</p>
-        <div className="inline-block px-6 py-1 mt-1 rounded-full bg-green-100 text-green-600 font-bold text-xl">
-          {aiAnalysis?.recommendation}
+
+      <div className="space-y-4">
+        <p className="text-lg font-semibold text-gray-600">Recommendation</p>
+
+
+        <div className={`inline-flex items-center gap-2 px-8 py-4 rounded-3xl font-bold text-2xl shadow-md transition-all duration-300 hover:scale-105 ${getColor(analysisData.recommendation)}`}>
+          {getRecommendationIcon(analysisData.recommendation)}
+          <span>{analysisData.recommendation}</span>
         </div>
       </div>
 
-      <div className="space-y-2">
-        <InsightRow label="Technical Analysis" value={aiAnalysis?.techData} />
-        <InsightRow label="News Analysis" value={aiAnalysis?.newsData} />
-        <InsightRow label="AI Analysis" value={aiAnalysis?.aiAnalysis} />
-        <button onClick={toggleReasoning} className="text-gray-700 text-sm">
+      <div className="bg-white space-y-2">
+        <InsightRow label="Technical Analysis" value={analysisData.techData} icon={<BarChart3 className="w-4 h-4" />} />
+        <InsightRow label="News Analysis" value={analysisData.newsData} icon={<Newspaper className="w-4 h-4" />} />
+        <InsightRow label="AI Analysis" value={analysisData.aiAnalysis} icon={<Zap className="w-4 h-4" />} />
+        <button onClick={toggleReasoning} className="text-purple-500 font-bold text-sm hover:text-purple-700">
           {showReasoning ? 'Hide Reasoning' : 'Show Reasoning'}
         </button>
       </div>
 
       {showReasoning && (
-        <div className="bg-white/30 rounded-xl text-gray-700 text-xs p-4 text-justify">
-          <p className="font-semibold">Reasoning:</p>
-          {Array.isArray(aiAnalysis?.reasoning) ? (
-            <ul className="list-disc list-inside space-y-1 mt-1">
-              {aiAnalysis.reasoning.map((point, idx) => (
+        <div className="bg-gradient-to-br from-white via-purple-50 to-purple-100 shadow-sm border border-purple-100 rounded-3xl p-6 text-left">
+          <h4 className="font-bold text-gray-500 mb-4 flex items-center gap-2">
+            <Brain className="w-4 h-4" />
+            Detailed Reasoning
+          </h4>
+          {Array.isArray(analysisData.reasoning) ? (
+            <ul className="list-disc list-inside space-y-1 mt-1 text-gray-500">
+              {analysisData.reasoning.map((point, idx) => (
                 <li key={idx}>{point.replace(/^[•\-\s]+/, '').trim()}</li>
               ))}
             </ul>
           ) : (
-            <ul className="list-disc list-inside space-y-1 mt-1">
-              {aiAnalysis?.reasoning
-                ?.split(/\n+|\.\s+/) // split by newlines or sentence ends
-                .filter((line) => line.trim().length > 0)
-                .map((point, idx) => (
-                  <li key={idx}>{point.replace(/^[•\-\s]+/, '').trim()}</li>
-                ))}
-            </ul>
-          )}
+              <ul className="list-disc list-inside space-y-1 mt-1 text-gray-500">
+                {analysisData.reasoning
+                  ?.split(/\n+|\.\s+/) // split by newlines or sentence ends
+                  .filter((line) => line.trim().length > 0)
+                  .map((point, idx) => (
+                    <li key={idx}>{point.replace(/^[•\-\s]+/, '').trim()}</li>
+                  ))}
+              </ul>
+            )}
         </div>
       )}
     </div>
