@@ -56,7 +56,7 @@ const AIInsightsCard = ({ aiAnalysis }) => {
 
   return (
     <div className="mt-8 mb-8 bg-white rounded-3xl p-8 w-[600px] shadow-sm mx-auto text-gray-800 space-y-6 border border-purple-100">
-      <div className="flex items-center gap-2 bg-gradient-to-br from-purple-500 via-purple-500 to-purple-600 rounded-2xl p-4 shadow-lg text-left">
+      <div className="flex items-center gap-2 bg-gradient-to-br from-purple-500 via-purple-500 to-purple-600 rounded-2xl p-4 text-left">
         <Zap className="w-5 h-5 text-white" />
         <h3 className="text-white text-xl font-bold">AI Insights</h3>
       </div>
@@ -64,9 +64,7 @@ const AIInsightsCard = ({ aiAnalysis }) => {
 
       <div className="space-y-4">
         <p className="text-lg font-semibold text-gray-600">Recommendation</p>
-
-
-        <div className={`inline-flex items-center gap-2 px-8 py-4 rounded-3xl font-bold text-2xl shadow-md transition-all duration-300 hover:scale-105 ${getColor(analysisData.recommendation)}`}>
+        <div className={`inline-flex items-center gap-2 px-8 py-4 rounded-3xl font-bold text-2xl shadow-md ${getColor(analysisData.recommendation)}`}>
           {getRecommendationIcon(analysisData.recommendation)}
           <span>{analysisData.recommendation}</span>
         </div>
