@@ -132,47 +132,103 @@ const Sells = () => {
             const symbols = portfolio.map(item => item.ticker);
             const stockData = await apiService.getStockData(symbols);
 
-            return portfolio.map(item => {
+            // Fetch individual BUY trades for each ticker
+            const buyTradesPromises = symbols.map(symbol => apiService.getTradesByTicker(symbol));
+            const buyTradesResults = await Promise.all(buyTradesPromises);
+            
+            // Create a map of ticker to BUY trades
+            const buyTradesByTicker: { [key: string]: TradeHistory[] } = {};
+            buyTradesResults.forEach((trades, index) => {
+                const symbol = symbols[index];
+                buyTradesByTicker[symbol] = trades.filter(trade => trade.tradeType === 'BUY');
+            });
+
+            const result: PortfolioDataItem[] = [];
+
+            // For each portfolio item, create individual trade entries
+            for (const item of portfolio) {
                 const currentStock = stockData.find(stock => stock.symbol === item.ticker);
                 const currentPrice = currentStock?.price || item.buyPrice;
                 const previousClose = currentStock?.previousClose || item.buyPrice;
 
                 const priceChange = currentPrice - previousClose;
                 const priceChangePercent = previousClose > 0 ? (priceChange / previousClose) * 100 : 0;
-                const totalGain = (currentPrice - item.buyPrice) * item.quantity;
-                const totalGainPercent = item.buyPrice > 0 ? ((currentPrice - item.buyPrice) / item.buyPrice) * 100 : 0;
-                const currentValue = currentPrice * item.quantity;
 
-                return {
-                    symbol: item.ticker,
-                    lastPrice: currentPrice,
-                    change: priceChange,
-                    changePercent: priceChangePercent,
-                    quantity: item.quantity,
-                    pricePaid: item.buyPrice,
-                    daysGain: priceChange * item.quantity,
-                    totalGain: totalGain,
-                    totalGainPercent: totalGainPercent,
-                    value: currentValue,
-                    date: item.buyDate
-                };
-            });
+                // Get individual BUY trades for this ticker
+                const buyTrades = buyTradesByTicker[item.ticker] || [];
+
+                if (buyTrades.length > 0) {
+                    // Create separate entries for each individual BUY trade
+                    for (const trade of buyTrades) {
+                        const tradeQuantity = trade.quantity;
+                        const tradePrice = trade.price;
+                        const tradeDate = trade.tradeDate;
+                        
+                        const totalGain = (currentPrice - tradePrice) * tradeQuantity;
+                        const totalGainPercent = tradePrice > 0 ? ((currentPrice - tradePrice) / tradePrice) * 100 : 0;
+                        const currentValue = currentPrice * tradeQuantity;
+                        const daysGain = priceChange * tradeQuantity;
+
+                        result.push({
+                            symbol: item.ticker,
+                            lastPrice: currentPrice,
+                            change: priceChange,
+                            changePercent: priceChangePercent,
+                            quantity: tradeQuantity,
+                            pricePaid: tradePrice,
+                            daysGain: daysGain,
+                            totalGain: totalGain,
+                            totalGainPercent: totalGainPercent,
+                            value: currentValue,
+                            date: tradeDate
+                        });
+                    }
+                } else {
+                    // Fallback to portfolio item if no individual trades found
+                    const totalGain = (currentPrice - item.buyPrice) * item.quantity;
+                    const totalGainPercent = item.buyPrice > 0 ? ((currentPrice - item.buyPrice) / item.buyPrice) * 100 : 0;
+                    const currentValue = currentPrice * item.quantity;
+                    const daysGain = priceChange * item.quantity;
+
+                    result.push({
+                        symbol: item.ticker,
+                        lastPrice: currentPrice,
+                        change: priceChange,
+                        changePercent: priceChangePercent,
+                        quantity: item.quantity,
+                        pricePaid: item.buyPrice,
+                        daysGain: daysGain,
+                        totalGain: totalGain,
+                        totalGainPercent: totalGainPercent,
+                        value: currentValue,
+                        date: item.buyDate
+                    });
+                }
+            }
+
+            return result;
         } catch (err) {
             console.error('Error fetching stock data:', err);
             // Return portfolio data without current prices if stock data fetch fails
-            return portfolio.map(item => ({
-                symbol: item.ticker,
-                lastPrice: item.buyPrice,
-                change: 0,
-                changePercent: 0,
-                quantity: item.quantity,
-                pricePaid: item.buyPrice,
-                daysGain: 0,
-                totalGain: 0,
-                totalGainPercent: 0,
-                value: item.totalValue,
-                date: item.buyDate
-            }));
+            const result: PortfolioDataItem[] = [];
+            
+            for (const item of portfolio) {
+                result.push({
+                    symbol: item.ticker,
+                    lastPrice: item.buyPrice,
+                    change: 0,
+                    changePercent: 0,
+                    quantity: item.quantity,
+                    pricePaid: item.buyPrice,
+                    daysGain: 0,
+                    totalGain: 0,
+                    totalGainPercent: 0,
+                    value: item.totalValue,
+                    date: item.buyDate
+                });
+            }
+            
+            return result;
         }
     };
 
