@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.Map;
+import com.portfolio.backend.util.DateUtil;
 
 @RestController
 @RequestMapping("/api/buy")
@@ -28,9 +29,9 @@ public class BuyController {
     @PostMapping
     public ResponseEntity<Map<String, Object>> executeBuy(@RequestBody BuyRequest request) {
         try {
-            // Set trade date to today if not provided
+            // Set trade date to today in EST timezone if not provided
             if (request.getTradeDate() == null) {
-                request.setTradeDate(LocalDate.now());
+                request.setTradeDate(DateUtil.getCurrentDateInEST());
             }
 
             Map<String, Object> result = buyService.executeBuyTransaction(request);

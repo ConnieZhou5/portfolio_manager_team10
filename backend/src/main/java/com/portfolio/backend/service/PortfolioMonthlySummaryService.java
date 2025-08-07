@@ -2,6 +2,7 @@ package com.portfolio.backend.service;
 
 import com.portfolio.backend.model.PortfolioMonthlySummary;
 import com.portfolio.backend.repository.PortfolioMonthlySummaryRepository;
+import com.portfolio.backend.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -59,7 +60,7 @@ public class PortfolioMonthlySummaryService {
      * @return List of monthly summaries for the last 12 months
      */
     public List<PortfolioMonthlySummary> getLast12Months() {
-        LocalDate now = LocalDate.now();
+        LocalDate now = DateUtil.getCurrentDateInEST();
         return portfolioMonthlySummaryRepository.findLast12Months(now.getYear(), now.getMonthValue());
     }
 
@@ -69,7 +70,7 @@ public class PortfolioMonthlySummaryService {
      * @return List of monthly summaries for the last year
      */
     public List<PortfolioMonthlySummary> getLastYear() {
-        LocalDate now = LocalDate.now();
+        LocalDate now = DateUtil.getCurrentDateInEST();
         int startYear = now.getYear() - 1;
         return portfolioMonthlySummaryRepository.findLastYear(startYear);
     }
@@ -120,7 +121,7 @@ public class PortfolioMonthlySummaryService {
      * @return The created monthly summary
      */
     public PortfolioMonthlySummary createCurrentMonthSummary() {
-        LocalDate now = LocalDate.now();
+        LocalDate now = DateUtil.getCurrentDateInEST();
         int year = now.getYear();
         int month = now.getMonthValue();
         
@@ -183,7 +184,7 @@ public class PortfolioMonthlySummaryService {
      * @return Number of summaries deleted
      */
     public int cleanupOldSummaries() {
-        LocalDate now = LocalDate.now();
+        LocalDate now = DateUtil.getCurrentDateInEST();
         int cutoffYear = now.getYear() - 1;
         
         List<PortfolioMonthlySummary> allSummaries = portfolioMonthlySummaryRepository.findAll();

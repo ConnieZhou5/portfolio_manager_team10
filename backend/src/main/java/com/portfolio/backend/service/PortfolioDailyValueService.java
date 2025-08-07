@@ -3,6 +3,7 @@ package com.portfolio.backend.service;
 import com.portfolio.backend.model.PortfolioDailyValue;
 import com.portfolio.backend.repository.PortfolioDailyValueRepository;
 import com.portfolio.backend.repository.PortfolioItemRepository;
+import com.portfolio.backend.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -57,7 +58,7 @@ public class PortfolioDailyValueService {
      * @return The saved daily value
      */
     public PortfolioDailyValue saveTodaySnapshot() {
-        return saveDailySnapshot(LocalDate.now());
+        return saveDailySnapshot(DateUtil.getCurrentDateInEST());
     }
     
     /**
@@ -88,7 +89,7 @@ public class PortfolioDailyValueService {
     @Scheduled(cron = "0 0 16 * * MON-FRI")
     public void scheduledDailySnapshot() {
         try {
-            LocalDate today = LocalDate.now();
+            LocalDate today = DateUtil.getCurrentDateInEST();
             
             // Only save if we don't already have a snapshot for today
             if (!portfolioDailyValueRepository.existsBySnapshotDate(today)) {
@@ -110,7 +111,7 @@ public class PortfolioDailyValueService {
     @Scheduled(cron = "0 0 2 * * SUN")
     public void scheduledCleanup() {
         try {
-            LocalDate cutoffDate = LocalDate.now().minusDays(30);
+            LocalDate cutoffDate = DateUtil.getCurrentDateInEST().minusDays(30);
             int deletedCount = portfolioDailyValueRepository.deleteSnapshotsOlderThan(cutoffDate);
             System.out.println("🧹 Cleaned up " + deletedCount + " snapshots older than " + cutoffDate);
         } catch (Exception e) {

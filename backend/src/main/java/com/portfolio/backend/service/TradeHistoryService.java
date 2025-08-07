@@ -4,6 +4,7 @@ import com.portfolio.backend.dto.TradeHistoryRequest;
 import com.portfolio.backend.dto.TradeHistoryResponse;
 import com.portfolio.backend.model.TradeHistory;
 import com.portfolio.backend.repository.TradeHistoryRepository;
+import com.portfolio.backend.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -176,7 +177,7 @@ public class TradeHistoryService {
      */
     private TradeHistory convertToEntity(TradeHistoryRequest request) {
         return new TradeHistory(
-                request.getTradeDate(),
+                request.getTradeDate() != null ? request.getTradeDate() : DateUtil.getCurrentDateInEST(),
                 request.getTicker(),
                 request.getQuantity(),
                 request.getPrice(),

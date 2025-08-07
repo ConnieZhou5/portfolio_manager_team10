@@ -5,6 +5,7 @@ import com.portfolio.backend.model.PortfolioItem;
 import com.portfolio.backend.model.TradeHistory;
 import com.portfolio.backend.repository.PortfolioItemRepository;
 import com.portfolio.backend.repository.TradeHistoryRepository;
+import com.portfolio.backend.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -32,7 +33,7 @@ public class PnLService {
      * @return Map containing monthly P&L data
      */
     public Map<String, Object> getMonthlyPnLData() {
-        LocalDate today = LocalDate.now();
+        LocalDate today = DateUtil.getCurrentDateInEST();
         LocalDate startDate = today.minusMonths(6).withDayOfMonth(1); // 7 months ago, start of month
         
         Map<String, Object> result = new HashMap<>();
@@ -204,7 +205,7 @@ public class PnLService {
      * @return Total unrealized gains
      */
     private BigDecimal calculateTotalUnrealizedGains() {
-        return calculateUnrealizedGainsAsOf(LocalDate.now()).setScale(2, java.math.RoundingMode.HALF_UP);
+        return calculateUnrealizedGainsAsOf(DateUtil.getCurrentDateInEST()).setScale(2, java.math.RoundingMode.HALF_UP);
     }
 
     /**

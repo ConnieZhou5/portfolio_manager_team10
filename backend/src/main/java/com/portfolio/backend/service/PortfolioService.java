@@ -5,6 +5,7 @@ import com.portfolio.backend.dto.PortfolioItemResponse;
 import com.portfolio.backend.model.PortfolioItem;
 import com.portfolio.backend.model.PortfolioDailyValue;
 import com.portfolio.backend.repository.PortfolioItemRepository;
+import com.portfolio.backend.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -176,7 +177,7 @@ public class PortfolioService {
         BigDecimal totalAssets = totalPortfolioValue.add(cash);
                 
         // Calculate day's gain
-        LocalDate today = LocalDate.now();
+        LocalDate today = DateUtil.getCurrentDateInEST();
         BigDecimal daysGain = BigDecimal.ZERO;
         String daysGainPercentage = "0.00%";
         
