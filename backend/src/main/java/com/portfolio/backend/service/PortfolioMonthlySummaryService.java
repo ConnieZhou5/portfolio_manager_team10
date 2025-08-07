@@ -1,14 +1,20 @@
 package com.portfolio.backend.service;
 
 import com.portfolio.backend.model.PortfolioMonthlySummary;
+import com.portfolio.backend.model.PortfolioItem;
+import com.portfolio.backend.model.TradeHistory;
+import com.portfolio.backend.repository.PortfolioItemRepository;
 import com.portfolio.backend.repository.PortfolioMonthlySummaryRepository;
+import com.portfolio.backend.repository.TradeHistoryRepository;
 import com.portfolio.backend.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,6 +29,15 @@ public class PortfolioMonthlySummaryService {
     
     @Autowired
     private CashService cashService;
+
+    @Autowired
+    private TradeHistoryRepository tradeHistoryRepository;
+
+    @Autowired
+    private PortfolioItemRepository portfolioItemRepository;
+
+    @Autowired
+    private StockDataService stockDataService;
 
     /**
      * Get all monthly summaries
@@ -84,8 +99,8 @@ public class PortfolioMonthlySummaryService {
      * @param previousMonthValue The total portfolio value at the end of the previous month
      * @return The saved monthly summary
      */
-    public PortfolioMonthlySummary createOrUpdateMonthlySummary(Integer year, Integer month, 
-                                                              BigDecimal totalValue, BigDecimal previousMonthValue) {
+    public PortfolioMonthlySummary createOrUpdateMonthlySummary(Integer year, Integer month,
+                                                               BigDecimal totalValue, BigDecimal previousMonthValue) {
         
         // Calculate monthly gain
         BigDecimal monthlyGain = totalValue.subtract(previousMonthValue);
@@ -97,6 +112,14 @@ public class PortfolioMonthlySummaryService {
                     .multiply(new BigDecimal("100"));
         }
         
+        // Calculate realized/unrealized for this month
+        YearMonth targetMonth = YearMonth.of(year, month);
+        BigDecimal realizedForMonth = calculateMonthlyRealized(targetMonth);
+        // If the month is before the current month, use month-end unrealized; otherwise use today's unrealized
+        LocalDate today = DateUtil.getCurrentDateInEST();
+        LocalDate asOfDate = targetMonth.isBefore(YearMonth.from(today)) ? targetMonth.atEndOfMonth() : today;
+        BigDecimal unrealizedAsOf = calculateUnrealizedAsOf(asOfDate);
+
         // Check if summary already exists
         Optional<PortfolioMonthlySummary> existingSummary = portfolioMonthlySummaryRepository.findByYearAndMonth(year, month);
         
@@ -107,9 +130,12 @@ public class PortfolioMonthlySummaryService {
             summary.setTotalValue(totalValue);
             summary.setMonthlyGain(monthlyGain);
             summary.setMonthlyGainPercentage(monthlyGainPercentage);
+            summary.setRealizedGain(realizedForMonth);
+            summary.setUnrealizedGain(unrealizedAsOf);
         } else {
             // Create new summary
-            summary = new PortfolioMonthlySummary(year, month, totalValue, monthlyGain, monthlyGainPercentage);
+            summary = new PortfolioMonthlySummary(year, month, totalValue, monthlyGain, monthlyGainPercentage,
+                    realizedForMonth, unrealizedAsOf);
         }
         
         return portfolioMonthlySummaryRepository.save(summary);
@@ -229,5 +255,107 @@ public class PortfolioMonthlySummaryService {
         }
         
         return deletedCount;
+    }
+
+    // ================= Helper calculations and scheduler =================
+
+    private BigDecimal calculateMonthlyRealized(YearMonth yearMonth) {
+        LocalDate monthStart = yearMonth.atDay(1);
+        LocalDate monthEnd = yearMonth.atEndOfMonth();
+
+        List<TradeHistory> monthTrades = tradeHistoryRepository
+                .findByTradeDateBetweenOrderByTradeDateDesc(monthStart, monthEnd);
+
+        BigDecimal realizedGains = monthTrades.stream()
+                .filter(trade -> trade.getTradeType() == TradeHistory.TradeType.SELL)
+                .map(this::calculateRealizedGainForTrade)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return realizedGains.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal calculateRealizedGainForTrade(TradeHistory sellTrade) {
+        List<TradeHistory> buyTrades = tradeHistoryRepository
+                .findByTickerAndTradeTypeAndTradeDateBeforeOrderByTradeDateAsc(
+                        sellTrade.getTicker(), TradeHistory.TradeType.BUY, sellTrade.getTradeDate());
+
+        if (buyTrades.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+
+        BigDecimal totalBuyValue = buyTrades.stream()
+                .map(TradeHistory::getTotalValue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        int totalBuyQuantity = buyTrades.stream()
+                .mapToInt(TradeHistory::getQuantity)
+                .sum();
+
+        if (totalBuyQuantity == 0) {
+            return BigDecimal.ZERO;
+        }
+
+        BigDecimal averageBuyPrice = totalBuyValue.divide(BigDecimal.valueOf(totalBuyQuantity), RoundingMode.HALF_UP);
+
+        BigDecimal sellValue = sellTrade.getTotalValue();
+        BigDecimal buyValue = averageBuyPrice.multiply(BigDecimal.valueOf(sellTrade.getQuantity()));
+        return sellValue.subtract(buyValue);
+    }
+
+    private BigDecimal calculateUnrealizedAsOf(LocalDate asOfDate) {
+        List<PortfolioItem> holdings = portfolioItemRepository.findAll();
+        BigDecimal totalUnrealized = BigDecimal.ZERO;
+
+        for (PortfolioItem holding : holdings) {
+            if (holding.getBuyDate().isAfter(asOfDate)) {
+                continue;
+            }
+            BigDecimal currentPrice = getCurrentPrice(holding.getTicker());
+            BigDecimal buyPrice = holding.getBuyPrice();
+            BigDecimal unrealized = currentPrice.subtract(buyPrice)
+                    .multiply(BigDecimal.valueOf(holding.getQuantity()));
+            totalUnrealized = totalUnrealized.add(unrealized);
+        }
+
+        return totalUnrealized.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal getCurrentPrice(String ticker) {
+        try {
+            List<java.util.Map<String, Object>> stockData = stockDataService.getStockData(java.util.List.of(ticker));
+            if (!stockData.isEmpty() && stockData.get(0).get("price") != null) {
+                Object priceObj = stockData.get(0).get("price");
+                if (priceObj instanceof Number) {
+                    return BigDecimal.valueOf(((Number) priceObj).doubleValue());
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error fetching current price for " + ticker + ": " + e.getMessage());
+        }
+        List<PortfolioItem> holdings = portfolioItemRepository.findByTicker(ticker);
+        if (!holdings.isEmpty()) {
+            return holdings.get(0).getBuyPrice();
+        }
+        return BigDecimal.ZERO;
+    }
+
+    // Run daily at 23:55 EST; if today is last day of month, write the monthly summary
+    @Scheduled(cron = "0 55 23 * * *")
+    public void scheduledMonthEndSummary() {
+        LocalDate today = DateUtil.getCurrentDateInEST();
+        YearMonth ym = YearMonth.from(today);
+        if (!today.equals(ym.atEndOfMonth())) {
+            return;
+        }
+
+        int year = ym.getYear();
+        int month = ym.getMonthValue();
+        if (portfolioMonthlySummaryRepository.existsByYearAndMonth(year, month)) {
+            return;
+        }
+
+        BigDecimal totalValue = portfolioService.getTotalPortfolioValue().add(cashService.getCashBalance());
+        BigDecimal previousMonthValue = getPreviousMonthValue(year, month);
+        createOrUpdateMonthlySummary(year, month, totalValue, previousMonthValue);
     }
 } 

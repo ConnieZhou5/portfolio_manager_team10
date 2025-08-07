@@ -14,6 +14,8 @@ import java.math.BigDecimal;
  *   totalValue - The total portfolio value at the end of the month
  *   monthlyGain - The absolute gain/loss for the month
  *   monthlyGainPercentage - The percentage gain/loss for the month
+ *   realizedGain - Realized gains for the month (from SELL trades in the month)
+ *   unrealizedGain - Unrealized gains as of month end (based on month-end prices)
  */
 @Entity
 @Table(name = "portfolio_monthly_summaries")
@@ -37,6 +39,12 @@ public class PortfolioMonthlySummary {
     
     @Column(name = "monthly_gain_percentage", nullable = false, precision = 10, scale = 2)
     private BigDecimal monthlyGainPercentage;
+
+    @Column(name = "realized_gain", precision = 12, scale = 2)
+    private BigDecimal realizedGain;
+
+    @Column(name = "unrealized_gain", precision = 12, scale = 2)
+    private BigDecimal unrealizedGain;
     
     // Constructor
     public PortfolioMonthlySummary() {
@@ -49,6 +57,18 @@ public class PortfolioMonthlySummary {
         this.totalValue = totalValue;
         this.monthlyGain = monthlyGain;
         this.monthlyGainPercentage = monthlyGainPercentage;
+    }
+
+    public PortfolioMonthlySummary(Integer year, Integer month, BigDecimal totalValue,
+                                   BigDecimal monthlyGain, BigDecimal monthlyGainPercentage,
+                                   BigDecimal realizedGain, BigDecimal unrealizedGain) {
+        this.year = year;
+        this.month = month;
+        this.totalValue = totalValue;
+        this.monthlyGain = monthlyGain;
+        this.monthlyGainPercentage = monthlyGainPercentage;
+        this.realizedGain = realizedGain;
+        this.unrealizedGain = unrealizedGain;
     }
     
     // Getters and Setters
@@ -99,6 +119,22 @@ public class PortfolioMonthlySummary {
     public void setMonthlyGainPercentage(BigDecimal monthlyGainPercentage) {
         this.monthlyGainPercentage = monthlyGainPercentage;
     }
+
+    public BigDecimal getRealizedGain() {
+        return realizedGain;
+    }
+
+    public void setRealizedGain(BigDecimal realizedGain) {
+        this.realizedGain = realizedGain;
+    }
+
+    public BigDecimal getUnrealizedGain() {
+        return unrealizedGain;
+    }
+
+    public void setUnrealizedGain(BigDecimal unrealizedGain) {
+        this.unrealizedGain = unrealizedGain;
+    }
     
     @Override
     public String toString() {
@@ -109,6 +145,8 @@ public class PortfolioMonthlySummary {
                 ", totalValue=" + totalValue +
                 ", monthlyGain=" + monthlyGain +
                 ", monthlyGainPercentage=" + monthlyGainPercentage +
+                ", realizedGain=" + realizedGain +
+                ", unrealizedGain=" + unrealizedGain +
                 '}';
     }
 } 

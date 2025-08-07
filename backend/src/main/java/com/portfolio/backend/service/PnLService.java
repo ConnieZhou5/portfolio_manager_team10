@@ -1,9 +1,10 @@
 package com.portfolio.backend.service;
 
-import com.portfolio.backend.dto.PortfolioItemResponse;
 import com.portfolio.backend.model.PortfolioItem;
+import com.portfolio.backend.model.PortfolioMonthlySummary;
 import com.portfolio.backend.model.TradeHistory;
 import com.portfolio.backend.repository.PortfolioItemRepository;
+import com.portfolio.backend.repository.PortfolioMonthlySummaryRepository;
 import com.portfolio.backend.repository.TradeHistoryRepository;
 import com.portfolio.backend.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +14,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class PnLService {
@@ -26,6 +26,9 @@ public class PnLService {
 
     @Autowired
     private StockDataService stockDataService;
+
+    @Autowired
+    private PortfolioMonthlySummaryRepository portfolioMonthlySummaryRepository;
 
     /**
      * Calculate monthly P&L data for the last 7 months
@@ -66,24 +69,47 @@ public class PnLService {
     private Map<String, Object> calculateMonthlyPnL(YearMonth yearMonth) {
         LocalDate monthStart = yearMonth.atDay(1);
         LocalDate monthEnd = yearMonth.atEndOfMonth();
-        
-        // Get all trades for this month
-        List<TradeHistory> monthTrades = tradeHistoryRepository.findByTradeDateBetweenOrderByTradeDateDesc(monthStart, monthEnd);
-        
-        // Calculate realized gains from SELL trades
-        BigDecimal realizedGains = monthTrades.stream()
-                .filter(trade -> trade.getTradeType() == TradeHistory.TradeType.SELL)
-                .map(this::calculateRealizedGainForTrade)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
-        // Calculate unrealized gains as of end of month
-        BigDecimal unrealizedGains = calculateUnrealizedGainsAsOf(monthEnd);
-        
+
+        YearMonth currentMonth = YearMonth.from(DateUtil.getCurrentDateInEST());
+
+        BigDecimal realizedGains;
+        BigDecimal unrealizedGains;
+
+        if (yearMonth.isBefore(currentMonth)) {
+            // Prefer stored monthly summary for historical months
+            Optional<PortfolioMonthlySummary> summaryOpt = portfolioMonthlySummaryRepository
+                    .findByYearAndMonth(yearMonth.getYear(), yearMonth.getMonthValue());
+            if (summaryOpt.isPresent()) {
+                PortfolioMonthlySummary summary = summaryOpt.get();
+                realizedGains = summary.getRealizedGain() != null ? summary.getRealizedGain() : BigDecimal.ZERO;
+                unrealizedGains = summary.getUnrealizedGain() != null ? summary.getUnrealizedGain() : BigDecimal.ZERO;
+            } else {
+                // Fallback to on-the-fly computation if summary missing
+                List<TradeHistory> monthTrades = tradeHistoryRepository
+                        .findByTradeDateBetweenOrderByTradeDateDesc(monthStart, monthEnd);
+                realizedGains = monthTrades.stream()
+                        .filter(trade -> trade.getTradeType() == TradeHistory.TradeType.SELL)
+                        .map(this::calculateRealizedGainForTrade)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                // Use as-of month end (note: uses current prices due to lack of historical price store)
+                unrealizedGains = calculateUnrealizedGainsAsOf(monthEnd);
+            }
+        } else {
+            // Current month: compute live
+            List<TradeHistory> monthTrades = tradeHistoryRepository
+                    .findByTradeDateBetweenOrderByTradeDateDesc(monthStart, DateUtil.getCurrentDateInEST());
+            realizedGains = monthTrades.stream()
+                    .filter(trade -> trade.getTradeType() == TradeHistory.TradeType.SELL)
+                    .map(this::calculateRealizedGainForTrade)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            unrealizedGains = calculateUnrealizedGainsAsOf(DateUtil.getCurrentDateInEST());
+        }
+
         Map<String, Object> monthData = new HashMap<>();
         monthData.put("month", yearMonth.getMonth().toString().substring(0, 3).toUpperCase());
         monthData.put("realized", realizedGains.doubleValue());
         monthData.put("unrealized", unrealizedGains.doubleValue());
-        
+
         return monthData;
     }
 
