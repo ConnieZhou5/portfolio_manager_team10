@@ -117,7 +117,7 @@ public class PnLService {
             return BigDecimal.ZERO;
         }
         
-        BigDecimal averageBuyPrice = totalBuyValue.divide(BigDecimal.valueOf(totalBuyQuantity), 2, BigDecimal.ROUND_HALF_UP);
+        BigDecimal averageBuyPrice = totalBuyValue.divide(BigDecimal.valueOf(totalBuyQuantity), java.math.RoundingMode.HALF_UP);
         
         // Calculate realized gain
         BigDecimal sellValue = sellTrade.getTotalValue();
@@ -194,7 +194,8 @@ public class PnLService {
         
         return sellTrades.stream()
                 .map(this::calculateRealizedGainForTrade)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, java.math.RoundingMode.HALF_UP);
     }
 
     /**
@@ -203,7 +204,7 @@ public class PnLService {
      * @return Total unrealized gains
      */
     private BigDecimal calculateTotalUnrealizedGains() {
-        return calculateUnrealizedGainsAsOf(LocalDate.now());
+        return calculateUnrealizedGainsAsOf(LocalDate.now()).setScale(2, java.math.RoundingMode.HALF_UP);
     }
 
     /**
@@ -212,6 +213,6 @@ public class PnLService {
      * @return Total P&L
      */
     private BigDecimal calculateTotalPnL() {
-        return calculateTotalRealizedGains().add(calculateTotalUnrealizedGains());
+        return calculateTotalRealizedGains().add(calculateTotalUnrealizedGains()).setScale(2, java.math.RoundingMode.HALF_UP);
     }
 } 
