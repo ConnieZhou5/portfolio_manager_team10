@@ -23,14 +23,16 @@ const AIInsightsCard = ({ aiAnalysis }) => {
 
   const getColor = (sentiment) => {
     switch (sentiment?.toLowerCase()) {
-      case 'positive', 'buy':
+      case 'positive':
+      case 'buy':
         return 'bg-gradient-to-r from-green-100 to-green-50 text-green-700 border-green-200';
-      case 'negative', 'sell':
+      case 'negative':
+      case 'sell':
         return 'bg-gradient-to-r from-red-100 to-red-50 text-red-700 border-red-200';
       default:
         return 'bg-gradient-to-r from-yellow-100 to-yellow-50 text-yellow-700 border-yellow-200';
     }
-  };
+  };  
 
   const getRecommendationIcon = (recommendation) => {
     switch (recommendation?.toLowerCase()) {
