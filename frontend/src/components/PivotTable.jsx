@@ -83,15 +83,20 @@ const PivotTable = ({ data, searchText }) => {
 
   const globalTotals = filteredRawRows.reduce(
     (acc, row) => {
-      acc.pricePaid += row.pricePaid;
+      // Calculate total amount invested (price paid × quantity) for each stock
+      acc.pricePaid += row.pricePaid * row.quantity;
       acc.daysGain += row.daysGain;
       acc.totalGain += row.totalGain;
-      acc.totalGainPercent += row.totalGainPercent;
       acc.value += row.value;
       return acc;
     },
     { pricePaid: 0, daysGain: 0, totalGain: 0, totalGainPercent: 0, value: 0 }
   );
+
+  // Calculate weighted average percentage based on total gain vs total invested
+  if (globalTotals.pricePaid > 0) {
+    globalTotals.totalGainPercent = (globalTotals.totalGain / globalTotals.pricePaid) * 100;
+  }
 
   for (const key in globalTotals) {
     globalTotals[key] = +globalTotals[key].toFixed(2);
@@ -107,7 +112,7 @@ const PivotTable = ({ data, searchText }) => {
                 Symbol
               </th>
               <th className="px-4 py-3 text-right font-semibold text-gray-700 min-w-[100px]">
-                Last Price$
+                Latest Price$
               </th>
               <th className="px-4 py-3 text-right font-semibold text-gray-700 min-w-[90px]">
                 Change$

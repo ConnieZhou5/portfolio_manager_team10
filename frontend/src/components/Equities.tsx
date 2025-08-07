@@ -35,20 +35,52 @@ const Equity = () => {
                 return;
             }
 
-            // Calculate total portfolio value
-            const total = portfolioItems.reduce((sum, item) => sum + item.totalValue, 0);
-            setTotalValue(total);
+            // Get current stock prices for all portfolio items
+            let assetData: AssetData[] = [];
+            try {
+                const symbols = portfolioItems.map(item => item.ticker);
+                const stockData = await apiService.getStockData(symbols);
 
-            // Transform portfolio items to asset data format
-            const assetData: AssetData[] = portfolioItems.map(item => {
-                const percentage = total > 0 ? (item.totalValue / total) * 100 : 0;
-                return {
-                    name: item.ticker,
-                    percentage: Math.round(percentage * 100) / 100, // Round to 2 decimal places
-                    value: item.totalValue,
-                    color: getTickerColor(item.ticker)
-                };
-            });
+                // Calculate current market values and total portfolio value
+                let total = 0;
+                assetData = portfolioItems.map(item => {
+                    const currentStock = stockData.find(stock => stock.symbol === item.ticker);
+                    const currentPrice = currentStock?.price || item.buyPrice;
+                    const currentValue = currentPrice * item.quantity;
+                    total += currentValue;
+                    
+                    return {
+                        name: item.ticker,
+                        percentage: 0, // Will calculate after getting total
+                        value: currentValue,
+                        color: getTickerColor(item.ticker)
+                    };
+                });
+
+                // Calculate percentages based on current market values
+                assetData = assetData.map(asset => ({
+                    ...asset,
+                    percentage: total > 0 ? Math.round((asset.value / total) * 100 * 100) / 100 : 0
+                }));
+
+            } catch (err) {
+                console.error('Error fetching stock data, using buy prices as fallback:', err);
+                // Fallback to buy prices if stock data fetch fails
+                const total = portfolioItems.reduce((sum, item) => sum + item.totalValue, 0);
+                assetData = portfolioItems.map(item => {
+                    const percentage = total > 0 ? (item.totalValue / total) * 100 : 0;
+                    return {
+                        name: item.ticker,
+                        percentage: Math.round(percentage * 100) / 100,
+                        value: item.totalValue,
+                        color: getTickerColor(item.ticker)
+                    };
+                });
+            }
+
+            // Calculate total value from asset data
+            const totalValue = assetData.reduce((sum, asset) => sum + asset.value, 0);
+            setTotalValue(totalValue);
 
             // Sort by value (highest first)
             assetData.sort((a, b) => b.value - a.value);
