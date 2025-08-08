@@ -52,9 +52,16 @@ public class PnLService {
             current = current.plusMonths(1);
         }
         
+        // Get current month's unrealized gains from the chart data
+        double currentMonthUnrealized = 0.0;
+        if (!monthlyData.isEmpty()) {
+            Map<String, Object> currentMonthData = monthlyData.get(monthlyData.size() - 1);
+            currentMonthUnrealized = (Double) currentMonthData.get("unrealized");
+        }
+        
         result.put("monthlyData", monthlyData);
         result.put("totalRealized", calculateTotalRealizedGains());
-        result.put("totalUnrealized", calculateTotalUnrealizedGains());
+        result.put("totalUnrealized", currentMonthUnrealized);
         result.put("totalPnL", calculateTotalPnL());
         
         return result;
@@ -76,7 +83,7 @@ public class PnLService {
         BigDecimal unrealizedGains;
 
         if (yearMonth.isBefore(currentMonth)) {
-            // Prefer stored monthly summary for historical months
+            // Past months: use stored monthly summary
             Optional<PortfolioMonthlySummary> summaryOpt = portfolioMonthlySummaryRepository
                     .findByYearAndMonth(yearMonth.getYear(), yearMonth.getMonthValue());
             if (summaryOpt.isPresent()) {
@@ -212,17 +219,40 @@ public class PnLService {
     }
 
     /**
-     * Calculate total realized gains
+     * Calculate total realized gains (sum of all historical realized gains from monthly summaries)
      * 
      * @return Total realized gains
      */
     private BigDecimal calculateTotalRealizedGains() {
-        List<TradeHistory> sellTrades = tradeHistoryRepository.findByTradeTypeOrderByTradeDateDesc(TradeHistory.TradeType.SELL);
+        LocalDate today = DateUtil.getCurrentDateInNYC();
+        int currentYear = today.getYear();
         
-        return sellTrades.stream()
+        // Get all monthly summaries for the current year
+        List<PortfolioMonthlySummary> monthlySummaries = portfolioMonthlySummaryRepository.findByYearOrderByMonth(currentYear);
+        
+        BigDecimal totalRealized = BigDecimal.ZERO;
+        
+        // Sum realized gains from all monthly summaries
+        for (PortfolioMonthlySummary summary : monthlySummaries) {
+            if (summary.getRealizedGain() != null) {
+                totalRealized = totalRealized.add(summary.getRealizedGain());
+            }
+        }
+        
+        // Add current month's realized gains from trade history (since it might not be in summary yet)
+        YearMonth currentMonth = YearMonth.from(today);
+        LocalDate monthStart = currentMonth.atDay(1);
+        List<TradeHistory> currentMonthTrades = tradeHistoryRepository
+                .findByTradeDateBetweenOrderByTradeDateDesc(monthStart, today);
+        
+        BigDecimal currentMonthRealized = currentMonthTrades.stream()
+                .filter(trade -> trade.getTradeType() == TradeHistory.TradeType.SELL)
                 .map(this::calculateRealizedGainForTrade)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .setScale(2, java.math.RoundingMode.HALF_UP);
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        totalRealized = totalRealized.add(currentMonthRealized);
+        
+        return totalRealized.setScale(2, java.math.RoundingMode.HALF_UP);
     }
 
     /**
