@@ -25,21 +25,34 @@ public class PortfolioDailyValueService {
     private CashService cashService;
 
     /**
-     * Save a daily portfolio snapshot
+     * Save a daily portfolio snapshot (idempotent - won't overwrite existing snapshots)
      * 
      * @param date The date for the snapshot
-     * @return The saved daily value
+     * @return The saved daily value (existing or newly created)
      */
     public PortfolioDailyValue saveDailySnapshot(LocalDate date) {
-        BigDecimal cash = cashService.getCashBalance();
-        BigDecimal totalPortfolioValue = getTotalPortfolioValue();
-        BigDecimal totalAssets = totalPortfolioValue.add(cash);
-        
-        PortfolioDailyValue dailyValue = new PortfolioDailyValue(
-            date, totalAssets, totalPortfolioValue, cash
-        );
-        
-        return portfolioDailyValueRepository.save(dailyValue);
+        return portfolioDailyValueRepository.findBySnapshotDate(date)
+            .orElseGet(() -> {
+                try {
+                    // Calculate current portfolio values
+                    BigDecimal cashValue = cashService.getCashBalance();
+                    BigDecimal investmentsValue = getTotalPortfolioValue();
+                    BigDecimal totalValue = cashValue.add(investmentsValue);
+                    
+                    // Create new snapshot
+                    PortfolioDailyValue pdv = new PortfolioDailyValue();
+                    pdv.setSnapshotDate(date); // never overwrite a past date
+                    pdv.setCashValue(cashValue);
+                    pdv.setInvestmentsValue(investmentsValue);
+                    pdv.setTotalValue(totalValue);
+                    
+                    return portfolioDailyValueRepository.save(pdv);
+                } catch (Exception e) {
+                    // Log error and rethrow to maintain transaction integrity
+                    System.err.println("❌ Error creating daily snapshot for " + date + ": " + e.getMessage());
+                    throw new RuntimeException("Failed to create daily snapshot for " + date, e);
+                }
+            });
     }
     
     /**
@@ -58,7 +71,7 @@ public class PortfolioDailyValueService {
      * @return The saved daily value
      */
     public PortfolioDailyValue saveTodaySnapshot() {
-        return saveDailySnapshot(DateUtil.getCurrentDateInEST());
+        return saveDailySnapshot(DateUtil.getCurrentDateInNYC());
     }
     
     /**
@@ -83,13 +96,13 @@ public class PortfolioDailyValueService {
 
     /**
      * Scheduled job to save daily portfolio snapshot
-     * Runs at 4:00 PM EST (market close) on weekdays only
+     * Runs at 4:00 PM EDT (market close) on weekdays only
      * Cron format: "0 0 16 * * MON-FRI" = minute hour day month day-of-week
      */
-    @Scheduled(cron = "0 0 16 * * MON-FRI")
+    @Scheduled(cron = "0 0 16 * * MON-FRI", zone = "America/New_York")
     public void scheduledDailySnapshot() {
         try {
-            LocalDate today = DateUtil.getCurrentDateInEST();
+            LocalDate today = DateUtil.getCurrentDateInNYC();
             
             // Only save if we don't already have a snapshot for today
             if (!portfolioDailyValueRepository.existsBySnapshotDate(today)) {
@@ -111,7 +124,7 @@ public class PortfolioDailyValueService {
     @Scheduled(cron = "0 0 2 * * SUN")
     public void scheduledCleanup() {
         try {
-            LocalDate cutoffDate = DateUtil.getCurrentDateInEST().minusDays(30);
+            LocalDate cutoffDate = DateUtil.getCurrentDateInNYC().minusDays(30);
             int deletedCount = portfolioDailyValueRepository.deleteSnapshotsOlderThan(cutoffDate);
             System.out.println("🧹 Cleaned up " + deletedCount + " snapshots older than " + cutoffDate);
         } catch (Exception e) {

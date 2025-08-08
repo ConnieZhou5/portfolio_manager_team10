@@ -75,7 +75,7 @@ public class PortfolioMonthlySummaryService {
      * @return List of monthly summaries for the last 12 months
      */
     public List<PortfolioMonthlySummary> getLast12Months() {
-        LocalDate now = DateUtil.getCurrentDateInEST();
+        LocalDate now = DateUtil.getCurrentDateInNYC();
         return portfolioMonthlySummaryRepository.findLast12Months(now.getYear(), now.getMonthValue());
     }
 
@@ -85,7 +85,7 @@ public class PortfolioMonthlySummaryService {
      * @return List of monthly summaries for the last year
      */
     public List<PortfolioMonthlySummary> getLastYear() {
-        LocalDate now = DateUtil.getCurrentDateInEST();
+        LocalDate now = DateUtil.getCurrentDateInNYC();
         int startYear = now.getYear() - 1;
         return portfolioMonthlySummaryRepository.findLastYear(startYear);
     }
@@ -116,7 +116,7 @@ public class PortfolioMonthlySummaryService {
         YearMonth targetMonth = YearMonth.of(year, month);
         BigDecimal realizedForMonth = calculateMonthlyRealized(targetMonth);
         // If the month is before the current month, use month-end unrealized; otherwise use today's unrealized
-        LocalDate today = DateUtil.getCurrentDateInEST();
+        LocalDate today = DateUtil.getCurrentDateInNYC();
         LocalDate asOfDate = targetMonth.isBefore(YearMonth.from(today)) ? targetMonth.atEndOfMonth() : today;
         BigDecimal unrealizedAsOf = calculateUnrealizedAsOf(asOfDate);
 
@@ -147,7 +147,7 @@ public class PortfolioMonthlySummaryService {
      * @return The created monthly summary
      */
     public PortfolioMonthlySummary createCurrentMonthSummary() {
-        LocalDate now = DateUtil.getCurrentDateInEST();
+        LocalDate now = DateUtil.getCurrentDateInNYC();
         int year = now.getYear();
         int month = now.getMonthValue();
         
@@ -210,7 +210,7 @@ public class PortfolioMonthlySummaryService {
      * @return Number of summaries deleted
      */
     public int cleanupOldSummaries() {
-        LocalDate now = DateUtil.getCurrentDateInEST();
+        LocalDate now = DateUtil.getCurrentDateInNYC();
         int cutoffYear = now.getYear() - 1;
         
         List<PortfolioMonthlySummary> allSummaries = portfolioMonthlySummaryRepository.findAll();
@@ -342,7 +342,7 @@ public class PortfolioMonthlySummaryService {
     // Run daily at 23:55 EST; if today is last day of month, write the monthly summary
     @Scheduled(cron = "0 55 23 * * *")
     public void scheduledMonthEndSummary() {
-        LocalDate today = DateUtil.getCurrentDateInEST();
+        LocalDate today = DateUtil.getCurrentDateInNYC();
         YearMonth ym = YearMonth.from(today);
         if (!today.equals(ym.atEndOfMonth())) {
             return;

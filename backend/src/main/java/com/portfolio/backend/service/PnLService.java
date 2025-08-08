@@ -36,7 +36,7 @@ public class PnLService {
      * @return Map containing monthly P&L data
      */
     public Map<String, Object> getMonthlyPnLData() {
-        LocalDate today = DateUtil.getCurrentDateInEST();
+        LocalDate today = DateUtil.getCurrentDateInNYC();
         LocalDate startDate = today.minusMonths(6).withDayOfMonth(1); // 7 months ago, start of month
         
         Map<String, Object> result = new HashMap<>();
@@ -70,7 +70,7 @@ public class PnLService {
         LocalDate monthStart = yearMonth.atDay(1);
         LocalDate monthEnd = yearMonth.atEndOfMonth();
 
-        YearMonth currentMonth = YearMonth.from(DateUtil.getCurrentDateInEST());
+        YearMonth currentMonth = YearMonth.from(DateUtil.getCurrentDateInNYC());
 
         BigDecimal realizedGains;
         BigDecimal unrealizedGains;
@@ -97,12 +97,12 @@ public class PnLService {
         } else {
             // Current month: compute live
             List<TradeHistory> monthTrades = tradeHistoryRepository
-                    .findByTradeDateBetweenOrderByTradeDateDesc(monthStart, DateUtil.getCurrentDateInEST());
+                    .findByTradeDateBetweenOrderByTradeDateDesc(monthStart, DateUtil.getCurrentDateInNYC());
             realizedGains = monthTrades.stream()
                     .filter(trade -> trade.getTradeType() == TradeHistory.TradeType.SELL)
                     .map(this::calculateRealizedGainForTrade)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
-            unrealizedGains = calculateUnrealizedGainsAsOf(DateUtil.getCurrentDateInEST());
+            unrealizedGains = calculateUnrealizedGainsAsOf(DateUtil.getCurrentDateInNYC());
         }
 
         Map<String, Object> monthData = new HashMap<>();
@@ -231,7 +231,7 @@ public class PnLService {
      * @return Total unrealized gains
      */
     private BigDecimal calculateTotalUnrealizedGains() {
-        return calculateUnrealizedGainsAsOf(DateUtil.getCurrentDateInEST()).setScale(2, java.math.RoundingMode.HALF_UP);
+        return calculateUnrealizedGainsAsOf(DateUtil.getCurrentDateInNYC()).setScale(2, java.math.RoundingMode.HALF_UP);
     }
 
     /**

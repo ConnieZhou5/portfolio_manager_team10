@@ -31,7 +31,7 @@ public class SellController {
         try {
             // Set trade date to today in EST timezone if not provided
             if (request.getTradeDate() == null) {
-                request.setTradeDate(DateUtil.getCurrentDateInEST());
+                request.setTradeDate(DateUtil.getCurrentDateInNYC());
             }
 
             Map<String, Object> result = sellService.executeSellTransaction(request);

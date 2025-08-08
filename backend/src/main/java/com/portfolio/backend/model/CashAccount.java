@@ -1,5 +1,6 @@
 package com.portfolio.backend.model;
 
+import com.portfolio.backend.util.DateUtil;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -25,12 +26,12 @@ public class CashAccount {
     // Constructor
     public CashAccount() {
         this.balance = BigDecimal.ZERO;
-        this.lastUpdated = LocalDateTime.now();
+        this.lastUpdated = DateUtil.getCurrentDateTimeInNYC();
     }
     
     public CashAccount(BigDecimal balance) {
         this.balance = balance;
-        this.lastUpdated = LocalDateTime.now();
+        this.lastUpdated = DateUtil.getCurrentDateTimeInNYC();
     }
     
     // Getters and Setters
@@ -48,7 +49,7 @@ public class CashAccount {
     
     public void setBalance(BigDecimal balance) {
         this.balance = balance;
-        this.lastUpdated = LocalDateTime.now();
+        this.lastUpdated = DateUtil.getCurrentDateTimeInNYC();
     }
     
     public LocalDateTime getLastUpdated() {
@@ -66,7 +67,7 @@ public class CashAccount {
      */
     public void addCash(BigDecimal amount) {
         this.balance = this.balance.add(amount);
-        this.lastUpdated = LocalDateTime.now();
+        this.lastUpdated = DateUtil.getCurrentDateTimeInNYC();
     }
     
     /**
@@ -78,7 +79,7 @@ public class CashAccount {
     public boolean subtractCash(BigDecimal amount) {
         if (this.balance.compareTo(amount) >= 0) {
             this.balance = this.balance.subtract(amount);
-            this.lastUpdated = LocalDateTime.now();
+            this.lastUpdated = DateUtil.getCurrentDateTimeInNYC();
             return true;
         }
         return false;

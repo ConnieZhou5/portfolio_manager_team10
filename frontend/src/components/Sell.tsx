@@ -4,7 +4,7 @@ import PivotTable from './PivotTable';
 import { apiService, TradeHistory, PortfolioItem, SellRequest, SellResponse } from '../services/api';
 import { usePortfolio } from '../context/PortfolioContext';
 import { isMarketOpen } from '../utils/marketStatus';
-import { getCurrentDateInEST, formatDateInEST } from '../utils/dateUtils';
+import { getCurrentDateInNYC, formatDateInNYC } from '../utils/dateUtils';
 
 type Market = 'Market Open' | 'Market Closed'
 
@@ -257,7 +257,7 @@ const Sells = () => {
     };
 
     const formatDate = (dateString: string) => {
-        return formatDateInEST(dateString);
+        return formatDateInNYC(dateString);
     };
 
     const [expandedRows, setExpandedRows] = useState<{ [key: string]: boolean }>({});
@@ -303,7 +303,7 @@ const Sells = () => {
                 ticker: symbol,
                 quantity: qty,
                 price: stock.lastPrice,
-                tradeDate: getCurrentDateInEST() // Today's date in EST timezone
+                tradeDate: getCurrentDateInNYC() // Today's date in EST timezone
             };
 
             const response = await apiService.executeSell(sellRequest);

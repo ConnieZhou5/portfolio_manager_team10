@@ -177,7 +177,7 @@ public class TradeHistoryService {
      */
     private TradeHistory convertToEntity(TradeHistoryRequest request) {
         return new TradeHistory(
-                request.getTradeDate() != null ? request.getTradeDate() : DateUtil.getCurrentDateInEST(),
+                request.getTradeDate() != null ? request.getTradeDate() : DateUtil.getCurrentDateInNYC(),
                 request.getTicker(),
                 request.getQuantity(),
                 request.getPrice(),

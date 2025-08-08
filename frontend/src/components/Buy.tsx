@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { apiService, TradeHistory, StockData, BuyRequest, CashBalance } from '../services/api';
 import { usePortfolio } from '../context/PortfolioContext';
 import { isMarketOpen } from '../utils/marketStatus';
-import { getCurrentDateInEST, formatDateInEST } from '../utils/dateUtils';
+import { getCurrentDateInNYC, formatDateInNYC } from '../utils/dateUtils';
 import AIInsightsCard from './AIInsightsCard';
 
 type Market = 'Market Open' | 'Market Closed'
@@ -223,7 +223,7 @@ const Buys = () => {
                 ticker: stockInfo.Symbol,
                 quantity: qty,
                 price: price,
-                tradeDate: getCurrentDateInEST() // Today's date in EST timezone
+                tradeDate: getCurrentDateInNYC() // Today's date in EST timezone
             };
 
             const response = await apiService.executeBuy(buyRequest);
@@ -287,7 +287,7 @@ const Buys = () => {
     };
 
     const formatDate = (dateString: string) => {
-        return formatDateInEST(dateString);
+        return formatDateInNYC(dateString);
     };
 
     return (

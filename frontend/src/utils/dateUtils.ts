@@ -7,7 +7,7 @@
  * 
  * @returns Date string in YYYY-MM-DD format in EST timezone
  */
-export function getCurrentDateInEST(): string {
+export function getCurrentDateInNYC(): string {
     const now = new Date();
     
     // Convert to EST timezone
@@ -22,12 +22,12 @@ export function getCurrentDateInEST(): string {
 }
 
 /**
- * Format a date string to display format in EST timezone
+ * Format a date string to display format in EST/EDT timezone
  * 
  * @param dateString Date string in YYYY-MM-DD format
  * @returns Formatted date string for display
  */
-export function formatDateInEST(dateString: string): string {
+export function formatDateInNYC(dateString: string): string {
     if (!dateString) return '';
     
     try {

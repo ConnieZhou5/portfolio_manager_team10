@@ -177,7 +177,7 @@ public class PortfolioService {
         BigDecimal totalAssets = totalPortfolioValue.add(cash);
                 
         // Calculate day's gain
-        LocalDate today = DateUtil.getCurrentDateInEST();
+        LocalDate today = DateUtil.getCurrentDateInNYC();
         BigDecimal daysGain = BigDecimal.ZERO;
         String daysGainPercentage = "0.00%";
         
