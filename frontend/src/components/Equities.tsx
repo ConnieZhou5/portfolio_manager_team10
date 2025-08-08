@@ -50,7 +50,7 @@ const Equity = () => {
             // Calculate current market values and total portfolio value
             let total = 0;
             assetData = portfolioItems.map(item => {
-                const currentStock = stockData.find(stock => stock.symbol === item.ticker);
+                const currentStock = stockData.find(stock => stock.symbol.toUpperCase() === item.ticker.toUpperCase());
                 // Use current price if available and valid, otherwise fall back to buy price
                 const currentPrice = currentStock?.price && currentStock.price > 0 ? currentStock.price : item.buyPrice;
                 const currentValue = currentPrice * item.quantity;

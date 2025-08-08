@@ -199,7 +199,7 @@ const PortfolioStatsCards = () => {
                         
                         // Calculate investments value using current market prices
                         investmentsValue = portfolioItems.reduce((total, item) => {
-                            const currentStock = stockData.find(stock => stock.symbol === item.ticker);
+                            const currentStock = stockData.find(stock => stock.symbol.toUpperCase() === item.ticker.toUpperCase());
                             const currentPrice = currentStock?.price || item.buyPrice;
                             return total + (currentPrice * item.quantity);
                         }, 0);

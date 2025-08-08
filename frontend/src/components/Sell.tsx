@@ -148,7 +148,7 @@ const Sells = () => {
 
             // For each portfolio item, create individual trade entries
             for (const item of portfolio) {
-                const currentStock = stockData.find(stock => stock.symbol === item.ticker);
+                const currentStock = stockData.find(stock => stock.symbol.toUpperCase() === item.ticker.toUpperCase());
                 const currentPrice = currentStock?.price || item.buyPrice;
                 const previousClose = currentStock?.previousClose || item.buyPrice;
 
@@ -281,8 +281,8 @@ const Sells = () => {
             return;
         }
 
-        // Find the stock in portfolio data
-        const stock = portfolioData.find(item => item.symbol === symbol);
+        // Find the stock in portfolio data (case insensitive)
+        const stock = portfolioData.find(item => item.symbol.toUpperCase() === symbol.toUpperCase());
         if (!stock) {
             setSellError('Stock not found in your portfolio');
             return;
@@ -453,7 +453,7 @@ const Sells = () => {
                                     value={symbol}
                                     onChange={(e) => {
                                         const value = e.target.value;
-                                        const stock = portfolioData.find(item => item.symbol === value);
+                                        const stock = portfolioData.find(item => item.symbol.toUpperCase() === value.toUpperCase());
 
                                         if (stock && stock.quantity > 0) {
                                             setSymbol(value);
